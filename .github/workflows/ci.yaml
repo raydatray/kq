@@ -2,44 +2,53 @@ name: CI
 
 on:
   pull_request:
+    branches:
+      - main
   push:
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
+      - run: go mod tidy -diff
+      - run: go vet ./...
 
+  protobuf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.73.0
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Check protobuf
-        run: |
+      - run: |
           buf format --diff --exit-code
           buf lint
           buf build
-
-      - name: Check generated protobuf
-        run: |
+      - run: |
           buf generate
           git status --short
           git diff --exit-code
           test -z "$(git status --porcelain --untracked-files=all)"
 
-      - name: Test
-        run: go test ./...
-
-      - name: Integration Tests
-        run: test/integration/run.sh
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+      - run: sh test/integration/run.sh
