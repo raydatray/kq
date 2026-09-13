@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.73.0
+
+      - name: Check protobuf
+        run: |
+          buf format --diff --exit-code
+          buf lint
+          buf build
+
+      - name: Check generated protobuf
+        run: |
+          buf generate
+          git status --short
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
