@@ -22,6 +22,9 @@ jobs:
         with:
           version: 1.73.0
 
+      - name: Vet
+        run: go vet ./...
+
       - name: Check protobuf
         run: |
           buf format --diff --exit-code
@@ -38,5 +41,5 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Vet
-        run: go vet ./...
+      - name: Integration Tests
+        run: test/integration/run.sh
