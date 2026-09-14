@@ -7,13 +7,10 @@ import (
 )
 
 func TestWorkerHandlesTask(t *testing.T) {
-	_, value, err := encodeTask(Task{
+	value := encodeWorkerTestTask(t, Task{
 		Type:    "send-email",
 		Payload: []byte("hello"),
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	var received Task
 	worker := &Worker{
@@ -37,10 +34,7 @@ func TestWorkerHandlesTask(t *testing.T) {
 func TestWorkerReturnsHandlerError(t *testing.T) {
 	want := errors.New("failed")
 
-	_, value, err := encodeTask(Task{Type: "test"})
-	if err != nil {
-		t.Fatal(err)
-	}
+	value := encodeWorkerTestTask(t, Task{Type: "test"})
 
 	worker := &Worker{
 		handler: func(context.Context, Task) error {
@@ -51,4 +45,19 @@ func TestWorkerReturnsHandlerError(t *testing.T) {
 	if err := worker.handle(context.Background(), value); !errors.Is(err, want) {
 		t.Fatalf("error = %v, want %v", err, want)
 	}
+}
+
+func encodeWorkerTestTask(t *testing.T, task Task) []byte {
+	t.Helper()
+
+	envelope, err := newTaskEnvelope(task, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := encodeEnvelope(envelope)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return value
 }
