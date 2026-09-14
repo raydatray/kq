@@ -80,12 +80,12 @@ func (w *Worker) Run(ctx context.Context) error {
 }
 
 func (w *Worker) handle(ctx context.Context, value []byte) error {
-	_, task, err := decodeTask(value)
+	envelope, err := decodeEnvelope(value)
 	if err != nil {
 		return err
 	}
 
-	return w.handler(ctx, task)
+	return w.handler(ctx, taskFromEnvelope(envelope))
 }
 
 func (w *Worker) flushAcks() error {

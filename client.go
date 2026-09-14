@@ -49,21 +49,29 @@ func NewClient(config Config) (*Client, error) {
 }
 
 func (c *Client) Enqueue(ctx context.Context, task Task) (string, error) {
-	id, value, err := encodeTask(task)
+	envelope, err := newTaskEnvelope(
+		task,
+		c.config.RetryPolicy.maxRetries,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	value, err := encodeEnvelope(envelope)
 	if err != nil {
 		return "", err
 	}
 
 	err = c.writer.Write(ctx, &kgo.Record{
 		Topic: c.config.readyTopic(),
-		Key:   []byte(id),
+		Key:   []byte(envelope.Id),
 		Value: value,
 	})
 	if err != nil {
 		return "", fmt.Errorf("kq: enqueue task: %w", err)
 	}
 
-	return id, nil
+	return envelope.Id, nil
 }
 
 func (c *Client) Close() {
