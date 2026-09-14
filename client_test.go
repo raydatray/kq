@@ -3,6 +3,7 @@ package kq
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 )
@@ -22,7 +23,10 @@ func (*fakeWriter) Close() {}
 func TestClientEnqueue(t *testing.T) {
 	writer := new(fakeWriter)
 	client := &Client{
-		config: Config{Queue: "email"},
+		config: Config{
+			Queue:       "email",
+			RetryPolicy: NewRetryPolicy(3, func(int32, string) time.Duration { return time.Minute }),
+		},
 		writer: writer,
 	}
 
@@ -41,11 +45,12 @@ func TestClientEnqueue(t *testing.T) {
 		t.Fatalf("key = %q, want %q", writer.record.Key, id)
 	}
 
-	gotID, task, err := decodeTask(writer.record.Value)
+	envelope, err := decodeEnvelope(writer.record.Value)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if gotID != id || task.Type != "send-email" {
+	task := taskFromEnvelope(envelope)
+	if envelope.Id != id || envelope.Retries != 3 || task.Type != "send-email" {
 		t.Fatalf("decoded task = %#v", task)
 	}
 }
