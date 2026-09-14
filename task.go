@@ -1,6 +1,7 @@
 package kq
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -24,48 +25,57 @@ func (t Task) validate() error {
 	return nil
 }
 
-func encodeTask(task Task) (string, []byte, error) {
+func newTaskEnvelope(task Task, retries int32) (*kqpb.TaskEnvelope, error) {
 	if err := task.validate(); err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	id := uuid.NewV7().String()
+	if retries < 0 {
+		return nil, errors.New("kq: task retries cannot be negative")
+	}
 
-	value, err := proto.Marshal(&kqpb.TaskEnvelope{
-		Id:         id,
+	return &kqpb.TaskEnvelope{
+		Id:         uuid.NewV7().String(),
 		Type:       task.Type,
-		Payload:    task.Payload,
+		Payload:    bytes.Clone(task.Payload),
 		EnqueuedAt: timestamppb.Now(),
-	})
-	if err != nil {
-		return "", nil, fmt.Errorf("kq: encode task: %w", err)
-	}
-
-	return id, value, nil
+		Retries:    retries,
+	}, nil
 }
 
-func decodeTask(value []byte) (string, Task, error) {
-	var envelope kqpb.TaskEnvelope
+func encodeEnvelope(envelope *kqpb.TaskEnvelope) ([]byte, error) {
+	value, err := proto.Marshal(envelope)
+	if err != nil {
+		return nil, fmt.Errorf("kq: encode task envelope: %w", err)
+	}
+	return value, nil
+}
 
+func decodeEnvelope(value []byte) (*kqpb.TaskEnvelope, error) {
+	var envelope kqpb.TaskEnvelope
 	if err := proto.Unmarshal(value, &envelope); err != nil {
-		return "", Task{}, fmt.Errorf("kq: decode task: %w", err)
+		return nil, fmt.Errorf("kq: decode task envelope: %w", err)
 	}
 
 	if strings.TrimSpace(envelope.Id) == "" {
-		return "", Task{}, errors.New("kq: task ID cannot be empty")
+		return nil, errors.New("kq: task ID cannot be empty")
 	}
 	if strings.TrimSpace(envelope.Type) == "" {
-		return "", Task{}, errors.New("kq: task type cannot be empty")
+		return nil, errors.New("kq: task type cannot be empty")
 	}
 	if envelope.EnqueuedAt == nil {
-		return "", Task{}, errors.New("kq: enqueue time cannot be empty")
+		return nil, errors.New("kq: enqueue time cannot be empty")
 	}
 	if err := envelope.EnqueuedAt.CheckValid(); err != nil {
-		return "", Task{}, fmt.Errorf("kq: invalid enqueue time: %w", err)
+		return nil, fmt.Errorf("kq: invalid enqueue time: %w", err)
 	}
 
-	return envelope.Id, Task{
+	return &envelope, nil
+}
+
+func taskFromEnvelope(envelope *kqpb.TaskEnvelope) Task {
+	return Task{
 		Type:    envelope.Type,
-		Payload: append([]byte(nil), envelope.Payload...),
-	}, nil
+		Payload: bytes.Clone(envelope.Payload),
+	}
 }
