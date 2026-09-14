@@ -2,7 +2,7 @@
 
 KQ is an embeddable Go job queue built on Kafka share groups. Producers write
 tasks to a ready topic, execution workers perform them, and retry movers return
-failed tasks after a fixed delay.
+failed tasks after a count-based delay mapped onto a Kafka delay grid.
 
 Topic names below are illustrative for a queue named `A`.
 
@@ -15,14 +15,10 @@ flowchart LR
 
     Ready --> Workers[Execution workers<br/>bounded concurrency]
     Workers -->|success| Done((Done))
-    Workers -->|retry after 1 minute| Retry1[(A-retry-1m)]
-    Workers -->|retry after 10 minutes| Retry10[(A-retry-10m)]
-    Workers -->|retry after 1 hour| Retry60[(A-retry-1h)]
+    Workers -->|retryable failure| Retry[(A-retry-*<br/>delay bands and partition ranges)]
     Workers -->|permanent failure or attempts exhausted| DLQ[(A-dlq)]
 
-    Retry1 --> Movers[Retry movers<br/>classic consumer group]
-    Retry10 --> Movers
-    Retry60 --> Movers
+    Retry --> Movers[Retry movers<br/>classic consumer group]
     Movers -->|delay elapsed| Ready
 ```
 
