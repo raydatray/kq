@@ -28,18 +28,23 @@ attempt 3 fails -> wait 1 hour
 attempt 4 fails -> dead-letter
 ```
 
-This configuration produces the following topics:
+The delays above are the logical retry policy. Physical retry topics are delay
+bands whose partitions represent bounded delay ranges. KQ stores each requested
+delay exactly and routes it to the containing range, as described in the
+[retry mover design](architecture/retry-mover.md).
+
+An illustrative delay grid may contain topics such as:
 
 ```text
 email-ready
-email-retry-1m
-email-retry-10m
-email-retry-1h
+email-retry-0s
+email-retry-2m
+email-retry-8m
 email-dlq
 ```
 
-The same queue configuration is supplied to the producer, execution worker,
-and retry mover so they agree on topic names and retry behavior.
+The exact retry-policy API and delay-grid configuration remain design targets.
+The execution worker and retry mover must use the same resolved grid.
 
 ## JSON Jobs
 
