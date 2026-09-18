@@ -23,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// next id: 12
+// next id: 13
 type TaskEnvelope struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// stable unique identifier of the task
@@ -38,16 +38,18 @@ type TaskEnvelope struct {
 	Retries int32 `protobuf:"varint,5,opt,name=retries,proto3" json:"retries,omitempty"`
 	// current number of retries of the task
 	Retried int32 `protobuf:"varint,6,opt,name=retried,proto3" json:"retried,omitempty"`
+	// minimum delay after the retry record's broker append timestamp (for the current retry)
+	RetryAfter *durationpb.Duration `protobuf:"bytes,7,opt,name=retry_after,json=retryAfter,proto3" json:"retry_after,omitempty"`
 	// the amount of time in which the task can execute (per attempt)
-	Timeout *durationpb.Duration `protobuf:"bytes,7,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timeout *durationpb.Duration `protobuf:"bytes,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	// the latest time at which the task can execute (across all attempts)
-	Deadline *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=deadline,proto3" json:"deadline,omitempty"`
+	Deadline *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=deadline,proto3" json:"deadline,omitempty"`
 	// error message of the last failure of the task
-	LastError string `protobuf:"bytes,9,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	LastError string `protobuf:"bytes,10,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
 	// timestamp of the error of the task
-	LastErrorAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_error_at,json=lastErrorAt,proto3" json:"last_error_at,omitempty"`
+	LastErrorAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_error_at,json=lastErrorAt,proto3" json:"last_error_at,omitempty"`
 	// arbitrary metadata of a task
-	Metadata      map[string]string `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Metadata      map[string]string `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -124,6 +126,13 @@ func (x *TaskEnvelope) GetRetried() int32 {
 	return 0
 }
 
+func (x *TaskEnvelope) GetRetryAfter() *durationpb.Duration {
+	if x != nil {
+		return x.RetryAfter
+	}
+	return nil
+}
+
 func (x *TaskEnvelope) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
@@ -163,7 +172,7 @@ var File_kq_kq_proto protoreflect.FileDescriptor
 
 const file_kq_kq_proto_rawDesc = "" +
 	"\n" +
-	"\vkq/kq.proto\x12\x02kq\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x82\x04\n" +
+	"\vkq/kq.proto\x12\x02kq\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbe\x04\n" +
 	"\fTaskEnvelope\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
@@ -171,14 +180,16 @@ const file_kq_kq_proto_rawDesc = "" +
 	"\venqueued_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"enqueuedAt\x12\x18\n" +
 	"\aretries\x18\x05 \x01(\x05R\aretries\x12\x18\n" +
-	"\aretried\x18\x06 \x01(\x05R\aretried\x123\n" +
-	"\atimeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\atimeout\x126\n" +
-	"\bdeadline\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x12\x1d\n" +
+	"\aretried\x18\x06 \x01(\x05R\aretried\x12:\n" +
+	"\vretry_after\x18\a \x01(\v2\x19.google.protobuf.DurationR\n" +
+	"retryAfter\x123\n" +
+	"\atimeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\atimeout\x126\n" +
+	"\bdeadline\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x12\x1d\n" +
 	"\n" +
-	"last_error\x18\t \x01(\tR\tlastError\x12>\n" +
-	"\rlast_error_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastErrorAt\x12:\n" +
-	"\bmetadata\x18\v \x03(\v2\x1e.kq.TaskEnvelope.MetadataEntryR\bmetadata\x1a;\n" +
+	"last_error\x18\n" +
+	" \x01(\tR\tlastError\x12>\n" +
+	"\rlast_error_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\vlastErrorAt\x12:\n" +
+	"\bmetadata\x18\f \x03(\v2\x1e.kq.TaskEnvelope.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B+Z)github.com/raydatray/kq/internal/proto/kqb\x06proto3"
@@ -204,15 +215,16 @@ var file_kq_kq_proto_goTypes = []any{
 }
 var file_kq_kq_proto_depIdxs = []int32{
 	2, // 0: kq.TaskEnvelope.enqueued_at:type_name -> google.protobuf.Timestamp
-	3, // 1: kq.TaskEnvelope.timeout:type_name -> google.protobuf.Duration
-	2, // 2: kq.TaskEnvelope.deadline:type_name -> google.protobuf.Timestamp
-	2, // 3: kq.TaskEnvelope.last_error_at:type_name -> google.protobuf.Timestamp
-	1, // 4: kq.TaskEnvelope.metadata:type_name -> kq.TaskEnvelope.MetadataEntry
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	3, // 1: kq.TaskEnvelope.retry_after:type_name -> google.protobuf.Duration
+	3, // 2: kq.TaskEnvelope.timeout:type_name -> google.protobuf.Duration
+	2, // 3: kq.TaskEnvelope.deadline:type_name -> google.protobuf.Timestamp
+	2, // 4: kq.TaskEnvelope.last_error_at:type_name -> google.protobuf.Timestamp
+	1, // 5: kq.TaskEnvelope.metadata:type_name -> kq.TaskEnvelope.MetadataEntry
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_kq_kq_proto_init() }

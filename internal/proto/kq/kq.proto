@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/raydatray/kq/internal/proto/kq";
 
-// next id: 12
+// next id: 13
 message TaskEnvelope {
   // stable unique identifier of the task
   string id = 1;
@@ -27,18 +27,21 @@ message TaskEnvelope {
   // current number of retries of the task
   int32 retried = 6;
 
+  // minimum delay after the retry record's broker append timestamp (for the current retry)
+  google.protobuf.Duration retry_after = 7;
+
   // the amount of time in which the task can execute (per attempt)
-  google.protobuf.Duration timeout = 7;
+  google.protobuf.Duration timeout = 8;
 
   // the latest time at which the task can execute (across all attempts)
-  google.protobuf.Timestamp deadline = 8;
+  google.protobuf.Timestamp deadline = 9;
 
   // error message of the last failure of the task
-  string last_error = 9;
+  string last_error = 10;
 
   // timestamp of the error of the task
-  google.protobuf.Timestamp last_error_at = 10;
+  google.protobuf.Timestamp last_error_at = 11;
 
   // arbitrary metadata of a task
-  map<string, string> metadata = 11;
+  map<string, string> metadata = 12;
 }
