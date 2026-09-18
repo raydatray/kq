@@ -73,6 +73,9 @@ func TestConfigNames(t *testing.T) {
 	if got := config.retryMoverGroup(); got != "kq.email.retry-mover" {
 		t.Errorf("retry mover group = %q, want %q", got, "kq.email.retry-mover")
 	}
+	if got := config.deadLetterTopic(); got != "email-dlq" {
+		t.Errorf("dead letter topic = %q, want %q", got, "email-dlq")
+	}
 }
 
 func TestConfigRetryTopics(t *testing.T) {
