@@ -8,13 +8,14 @@ import (
 )
 
 type sharePollResult struct {
-	record *kgo.Record
-	err    error
-	closed bool
+	records []*kgo.Record
+	err     error
+	closed  bool
 }
 
 type shareGroupConsumer interface {
-	Poll(context.Context) sharePollResult
+	Poll(context.Context, int) sharePollResult
+	Ack(*kgo.Record, kgo.AckStatus)
 	FlushAcks(context.Context) error
 	Close()
 }
@@ -23,11 +24,11 @@ type kafkaShareGroupConsumer struct {
 	client *kgo.Client
 }
 
-func newKafkaShareGroupConsumer(config Config) (*kafkaShareGroupConsumer, error) {
-	options, err := config.kafkaOptions(
+func newKafkaShareGroupConsumer(config WorkerConfig) (*kafkaShareGroupConsumer, error) {
+	options, err := config.Config.kafkaOptions(
 		kgo.ConsumeTopics(config.readyTopic()),
 		kgo.ShareGroup(config.workerGroup()),
-		kgo.ShareMaxRecords(1),
+		kgo.ShareMaxRecords(int32(config.Concurrency)),
 		kgo.ShareMaxRecordsStrict(),
 	)
 	if err != nil {
@@ -42,20 +43,17 @@ func newKafkaShareGroupConsumer(config Config) (*kafkaShareGroupConsumer, error)
 	return &kafkaShareGroupConsumer{client: client}, nil
 }
 
-func (c *kafkaShareGroupConsumer) Poll(ctx context.Context) sharePollResult {
-	fetches := c.client.PollRecords(ctx, 1)
-	records := fetches.Records()
-
-	var record *kgo.Record
-	if len(records) > 0 {
-		record = records[0]
-	}
-
+func (c *kafkaShareGroupConsumer) Poll(ctx context.Context, limit int) sharePollResult {
+	fetches := c.client.PollRecords(ctx, limit)
 	return sharePollResult{
-		record: record,
-		err:    fetches.Err(),
-		closed: fetches.IsClientClosed(),
+		records: fetches.Records(),
+		err:     fetches.Err(),
+		closed:  fetches.IsClientClosed(),
 	}
+}
+
+func (*kafkaShareGroupConsumer) Ack(record *kgo.Record, status kgo.AckStatus) {
+	record.Ack(status)
 }
 
 func (c *kafkaShareGroupConsumer) FlushAcks(ctx context.Context) error {

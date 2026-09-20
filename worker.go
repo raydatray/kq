@@ -29,7 +29,7 @@ func NewWorker(config WorkerConfig, handler Handler) (*Worker, error) {
 		return nil, err
 	}
 
-	consumer, err := newKafkaShareGroupConsumer(config.Config)
+	consumer, err := newKafkaShareGroupConsumer(config)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +53,9 @@ func NewWorker(config WorkerConfig, handler Handler) (*Worker, error) {
 
 func (w *Worker) Run(ctx context.Context) error {
 	for {
-		result := w.consumer.Poll(ctx)
+		result := w.consumer.Poll(ctx, w.config.Concurrency)
 
-		if result.record == nil {
+		if len(result.records) == 0 {
 			switch {
 			case ctx.Err() != nil:
 				return nil
@@ -68,21 +68,30 @@ func (w *Worker) Run(ctx context.Context) error {
 			}
 		}
 
-		record := result.record
-		taskErr := w.handle(ctx, record.Value)
-
-		status := kgo.AckAccept
-		if taskErr != nil {
-			status = kgo.AckRelease
+		var taskErr error
+		for _, record := range result.records {
+			err := w.handle(ctx, record.Value)
+			status := kgo.AckAccept
+			if err != nil {
+				status = kgo.AckRelease
+				taskErr = errors.Join(taskErr, err)
+			}
+			w.consumer.Ack(record, status)
 		}
-		record.Ack(status)
 
 		ackErr := w.flushAcks()
-		if taskErr != nil {
-			return errors.Join(taskErr, ackErr)
+		var pollErr error
+		if result.err != nil {
+			pollErr = fmt.Errorf("kq: poll ready queue: %w", result.err)
 		}
 		if ackErr != nil {
-			return fmt.Errorf("kq: ack task: %w", ackErr)
+			ackErr = fmt.Errorf("kq: ack tasks: %w", ackErr)
+		}
+		if err := errors.Join(taskErr, ackErr, pollErr); err != nil {
+			return err
+		}
+		if result.closed {
+			return nil
 		}
 	}
 }
