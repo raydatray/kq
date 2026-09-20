@@ -76,3 +76,7 @@ func (c Config) retryTopics() []string {
 func (c Config) retryMoverGroup() string {
 	return "kq." + c.Queue + ".retry-mover"
 }
+
+func (c Config) deadLetterTopic() string {
+	return c.Queue + "-dlq"
+}
