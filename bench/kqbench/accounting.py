@@ -49,7 +49,13 @@ def _error(event: Any) -> str:
     return str(getattr(event, "error", "") or "")
 
 
-def account(events: list[Any]) -> Correctness:
+def account(events: list[Any], exclude: set[int] | frozenset[int] | None = None) -> Correctness:
+    """Account for every produced workload ID.
+
+    IDs in exclude (the unmeasured warm-up range) are skipped entirely so
+    warm-up traffic never inflates produced counts or masks missing work.
+    """
+    excluded = exclude or frozenset()
     produced: set[int] = set()
     enqueue_errors = 0
     completed: set[int] = set()
@@ -59,6 +65,8 @@ def account(events: list[Any]) -> Correctness:
     for event in events:
         event_type = _type(event)
         workload_id = _workload_id(event)
+        if workload_id is not None and workload_id in excluded:
+            continue
         if event_type == "enqueue_finished":
             if _result(event) == "success" and not _error(event):
                 if workload_id is not None:

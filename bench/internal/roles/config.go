@@ -40,10 +40,19 @@ type TopologyConfig struct {
 
 // WorkloadConfig carries arrival and deterministic workload settings.
 type WorkloadConfig struct {
-	Arrival       ArrivalConfig                `json:"arrival"`
+	Arrival       ArrivalConfig                 `json:"arrival"`
 	ExecutionTime workload.DurationDistribution `json:"execution_time_ms"`
 	Failures      workload.FailureConfig        `json:"failures"`
-	RandomSeed    uint64                        `json:"random_seed"`
+	RandomSeed    uint64                         `json:"random_seed"`
+	Warmup        WarmupConfig                   `json:"warmup"`
+}
+
+// WarmupConfig reserves a disjoint workload ID range for the unmeasured
+// warm-up phase. Warm-up tasks always succeed; completing them proves the
+// share group is usable before measured producers start.
+type WarmupConfig struct {
+	Tasks  int    `json:"tasks"`
+	IDBase uint64 `json:"id_base"`
 }
 
 // ArrivalConfig describes requested enqueue pacing.
@@ -100,6 +109,9 @@ func (c Config) Validate() error {
 	if c.Workload.Arrival.DurationSeconds <= 0 {
 		return errors.New("roles: arrival duration must be positive")
 	}
+	if c.Workload.Warmup.Tasks < 0 {
+		return errors.New("roles: warm-up task count cannot be negative")
+	}
 	return c.ToWorkloadConfig().Validate()
 }
 
@@ -121,6 +133,17 @@ func (c Config) WorkloadIDs() []uint64 {
 // DueAt returns the global pacing deadline for an ID.
 func (c Config) DueAt(started time.Time, id uint64) time.Time {
 	return started.Add(time.Duration(id) * time.Second / time.Duration(c.Workload.Arrival.TargetRPS))
+}
+
+// WarmupIDs returns the reserved warm-up ID range [IDBase, IDBase+Tasks).
+// It never overlaps the measured range [0, TotalTasks) when IDBase exceeds
+// any plausible workload size.
+func (c Config) WarmupIDs() []uint64 {
+	var ids []uint64
+	for i := 0; i < c.Workload.Warmup.Tasks; i++ {
+		ids = append(ids, c.Workload.Warmup.IDBase+uint64(i))
+	}
+	return ids
 }
 
 // ToWorkloadConfig converts to deterministic generation config.
