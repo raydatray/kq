@@ -1,0 +1,61 @@
+{
+  "run_id": "2026-09-20-ready-success-v1-rps-sweep-82a1952",
+  "created_at": "2026-09-20T03:16:24.093015Z",
+  "revision": "82a19524a7c2",
+  "purpose": "Find the sustainable ready-path throughput limit with fixed topology by increasing requested RPS.",
+  "scenario": {
+    "id": "ready-success-v1",
+    "version": 1
+  },
+  "profile": "benchmark",
+  "environment": {
+    "architecture": "arm64",
+    "ci_provider": "",
+    "cpu_count": 12,
+    "go_version": "go version go1.27.0 darwin/arm64",
+    "kafka_version": "apache/kafka:4.3.1",
+    "operating_system": "Darwin",
+    "python_version": "3.13.9",
+    "runner": "rays-MacBook-Pro.local"
+  },
+  "topology": {
+    "movers": 1,
+    "producers": 2,
+    "ready_partitions": 1,
+    "retry_partitions": 4,
+    "workers": 2
+  },
+  "workload": {
+    "arrival": {
+      "duration_seconds": 10,
+      "target_rps_sweep": [
+        200,
+        300,
+        325,
+        350,
+        400,
+        800
+      ]
+    },
+    "execution_time_ms": {
+      "average": 5,
+      "p95": 10,
+      "p99": 20
+    },
+    "failures": {
+      "mode": "none",
+      "rate": 0
+    },
+    "random_seed": 42,
+    "warmup_tasks": 20
+  },
+  "source_runs": [
+    "2026-09-20-ready-success-v1-82a1952",
+    "2026-09-20-ready-success-v1-6c91325-3",
+    "2026-09-20-ready-success-v1-6c91325-5",
+    "2026-09-20-ready-success-v1-6c91325-4",
+    "2026-09-20-ready-success-v1-6c91325",
+    "2026-09-20-ready-success-v1-6c91325-2"
+  ],
+  "notes": "Revisions 6c913259f9dd and 82a19524a7c2 have identical repository content. Runs changed only workload.arrival.target_rps."
+}
