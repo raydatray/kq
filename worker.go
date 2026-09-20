@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	kqpb "github.com/raydatray/kq/internal/proto/kq"
@@ -19,6 +20,15 @@ type Worker struct {
 	producer recordProducer
 	config   WorkerConfig
 	handler  Handler
+}
+
+type workerJob struct {
+	record *kgo.Record
+}
+
+type workerResult struct {
+	record *kgo.Record
+	err    error
 }
 
 func NewWorker(config WorkerConfig, handler Handler) (*Worker, error) {
@@ -52,6 +62,26 @@ func NewWorker(config WorkerConfig, handler Handler) (*Worker, error) {
 }
 
 func (w *Worker) Run(ctx context.Context) error {
+	jobs := make(chan workerJob, w.config.Concurrency)
+	results := make(chan workerResult, w.config.Concurrency)
+	var workers sync.WaitGroup
+	for range w.config.Concurrency {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for job := range jobs {
+				results <- workerResult{
+					record: job.record,
+					err:    w.handle(ctx, job.record.Value),
+				}
+			}
+		}()
+	}
+	defer func() {
+		close(jobs)
+		workers.Wait()
+	}()
+
 	for {
 		result := w.consumer.Poll(ctx, w.config.Concurrency)
 
@@ -68,15 +98,19 @@ func (w *Worker) Run(ctx context.Context) error {
 			}
 		}
 
-		var taskErr error
 		for _, record := range result.records {
-			err := w.handle(ctx, record.Value)
+			jobs <- workerJob{record: record}
+		}
+
+		var taskErr error
+		for range result.records {
+			result := <-results
 			status := kgo.AckAccept
-			if err != nil {
+			if result.err != nil {
 				status = kgo.AckRelease
-				taskErr = errors.Join(taskErr, err)
+				taskErr = errors.Join(taskErr, result.err)
 			}
-			w.consumer.Ack(record, status)
+			w.consumer.Ack(result.record, status)
 		}
 
 		ackErr := w.flushAcks()
