@@ -3,6 +3,7 @@ package kq
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -15,6 +16,22 @@ type Config struct {
 
 	RetryPolicy RetryPolicy
 	RetryGrid   RetryGrid
+}
+
+type WorkerConfig struct {
+	Config
+	Concurrency int
+}
+
+func (c WorkerConfig) validate() error {
+	if c.Concurrency <= 0 {
+		return errors.New("kq: worker concurrency must be positive")
+	}
+	if c.Concurrency > math.MaxInt32 {
+		return errors.New("kq: worker concurrency exceeds Kafka limit")
+	}
+
+	return nil
 }
 
 func (c Config) kafkaOptions(options ...kgo.Opt) ([]kgo.Opt, error) {

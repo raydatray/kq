@@ -122,7 +122,7 @@ func TestWorkerDeadLettersExhaustedTask(t *testing.T) {
 	producer := new(fakeProducer)
 	worker := &Worker{
 		producer: producer,
-		config:   Config{Queue: "email"},
+		config:   WorkerConfig{Config: Config{Queue: "email"}},
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -173,7 +173,7 @@ func TestWorkerDeadLetterWriteFailure(t *testing.T) {
 	producer := &fakeProducer{err: writeErr}
 	worker := &Worker{
 		producer: producer,
-		config:   Config{Queue: "email"},
+		config:   WorkerConfig{Config: Config{Queue: "email"}},
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -231,7 +231,7 @@ func TestWorkerRejectsInvalidRetryDelay(t *testing.T) {
 	}
 }
 
-func workerRetryConfig(t *testing.T, delay time.Duration) Config {
+func workerRetryConfig(t *testing.T, delay time.Duration) WorkerConfig {
 	t.Helper()
 
 	grid, err := NewRetryGrid([]time.Duration{0, 2 * time.Minute}, 4)
@@ -239,10 +239,12 @@ func workerRetryConfig(t *testing.T, delay time.Duration) Config {
 		t.Fatal(err)
 	}
 
-	return Config{
-		Queue:       "email",
-		RetryPolicy: newTestRetryPolicy(t, 3, func(int32, string) time.Duration { return delay }),
-		RetryGrid:   grid,
+	return WorkerConfig{
+		Config: Config{
+			Queue:       "email",
+			RetryPolicy: newTestRetryPolicy(t, 3, func(int32, string) time.Duration { return delay }),
+			RetryGrid:   grid,
+		},
 	}
 }
 
