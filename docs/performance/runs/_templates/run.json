@@ -1,0 +1,45 @@
+{
+  "run_id": "<date>-<scenario>-<revision>",
+  "created_at": "<RFC3339>",
+  "revision": "<commit>",
+  "purpose": "<question this run answers>",
+  "scenario": null,
+  "profile": "<profile>",
+  "command": "<exact command>",
+  "environment": {
+    "go_version": "<version>",
+    "kafka_version": "<version>",
+    "operating_system": "<os>",
+    "architecture": "<architecture>",
+    "ci_provider": "<provider-or-empty>",
+    "runner": "<runner>",
+    "cpu_count": 0,
+    "memory_bytes": 0
+  },
+  "topology": {
+    "ready_partitions": 0,
+    "retry_partitions": 0,
+    "producers": 0,
+    "workers": 0,
+    "movers": 0
+  },
+  "workload": {
+    "arrival": {
+      "target_rps": 0,
+      "duration_seconds": 0
+    },
+    "execution_time_ms": {
+      "average": 0,
+      "p95": 0,
+      "p99": 0,
+      "max": 0
+    },
+    "random_seed": 0,
+    "failures": {
+      "rate": 0,
+      "mode": "none",
+      "duration_ms": 0,
+      "attempts": 0
+    }
+  }
+}
