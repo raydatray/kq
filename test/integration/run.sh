@@ -28,6 +28,15 @@ docker compose --file "$compose_file" exec -T kafka \
 	--bootstrap-server localhost:19092 \
 	--create \
 	--if-not-exists \
+	--topic concurrency-test-ready \
+	--partitions 1 \
+	--replication-factor 1
+
+docker compose --file "$compose_file" exec -T kafka \
+	/opt/kafka/bin/kafka-topics.sh \
+	--bootstrap-server localhost:19092 \
+	--create \
+	--if-not-exists \
 	--topic retry-test-ready \
 	--partitions 1 \
 	--replication-factor 1
@@ -74,6 +83,14 @@ docker compose --file "$compose_file" exec -T kafka \
 	--alter \
 	--entity-type groups \
 	--entity-name kq.retry-test.workers \
+	--add-config share.auto.offset.reset=earliest
+
+docker compose --file "$compose_file" exec -T kafka \
+	/opt/kafka/bin/kafka-configs.sh \
+	--bootstrap-server localhost:19092 \
+	--alter \
+	--entity-type groups \
+	--entity-name kq.concurrency-test.workers \
 	--add-config share.auto.offset.reset=earliest
 
 docker compose --file "$compose_file" exec -T kafka \
