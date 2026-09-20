@@ -31,7 +31,7 @@ func TestExhaustedTaskMovesToDLQ(t *testing.T) {
 	defer cancelWorker()
 
 	cause := errors.New("permanent failure")
-	worker, err := kq.NewWorker(config, func(context.Context, kq.Task) error {
+	worker, err := kq.NewWorker(kq.WorkerConfig{Config: config, Concurrency: 1}, func(context.Context, kq.Task) error {
 		return cause
 	})
 	if err != nil {

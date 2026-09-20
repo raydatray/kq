@@ -61,6 +61,30 @@ func TestConfigKafkaOptions(t *testing.T) {
 	}
 }
 
+func TestWorkerConfigValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		concurrency int
+		want        string
+	}{
+		{name: "zero", want: "kq: worker concurrency must be positive"},
+		{name: "negative", concurrency: -1, want: "kq: worker concurrency must be positive"},
+		{name: "positive", concurrency: 1},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := (WorkerConfig{Concurrency: test.concurrency}).validate()
+			switch {
+			case test.want == "" && err != nil:
+				t.Fatalf("unexpected error: %v", err)
+			case test.want != "" && (err == nil || err.Error() != test.want):
+				t.Fatalf("error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
 func TestConfigRetryValidation(t *testing.T) {
 	grid, err := NewRetryGrid([]time.Duration{0, 2 * time.Minute}, 4)
 	if err != nil {

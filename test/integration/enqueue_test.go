@@ -40,7 +40,7 @@ func TestEnqueueAndWorkerPickup(t *testing.T) {
 	defer cancel()
 
 	received := make(chan kq.Task, 1)
-	worker, err := kq.NewWorker(config, func(_ context.Context, task kq.Task) error {
+	worker, err := kq.NewWorker(kq.WorkerConfig{Config: config, Concurrency: 1}, func(_ context.Context, task kq.Task) error {
 		received <- task
 		cancel()
 		return nil
