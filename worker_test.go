@@ -117,11 +117,63 @@ func TestWorkerRetryWriteFailure(t *testing.T) {
 	}
 }
 
-func TestWorkerRetriesExhausted(t *testing.T) {
+func TestWorkerDeadLettersExhaustedTask(t *testing.T) {
 	handlerErr := errors.New("failed")
 	producer := new(fakeProducer)
 	worker := &Worker{
 		producer: producer,
+		config:   Config{Queue: "email"},
+		handler: func(context.Context, Task) error {
+			return handlerErr
+		},
+	}
+	value := encodeWorkerTestTask(t, Task{Type: "test", Payload: []byte("payload")}, 0)
+	original, err := decodeEnvelope(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := worker.handle(context.Background(), value); err != nil {
+		t.Fatal(err)
+	}
+	if producer.record == nil {
+		t.Fatal("dead letter record was not written")
+	}
+	if producer.record.Topic != "email-dlq" || producer.record.Partition != 0 {
+		t.Fatalf("dead letter destination = %s/%d", producer.record.Topic, producer.record.Partition)
+	}
+	if string(producer.record.Key) != original.Id {
+		t.Fatalf("dead letter key = %q, want %q", producer.record.Key, original.Id)
+	}
+
+	letter, err := decodeEnvelope(producer.record.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if letter.Retried != 0 || letter.Retries != 0 {
+		t.Fatalf("retry counts = %d/%d, want 0/0", letter.Retried, letter.Retries)
+	}
+	if letter.Type != "test" || string(letter.Payload) != "payload" {
+		t.Fatalf("dead letter envelope = %v", letter)
+	}
+	if letter.LastError != handlerErr.Error() {
+		t.Fatalf("last error = %q, want %q", letter.LastError, handlerErr)
+	}
+	if letter.LastErrorAt == nil {
+		t.Fatal("last error time is nil")
+	}
+	if err := letter.LastErrorAt.CheckValid(); err != nil {
+		t.Fatalf("last error time is invalid: %v", err)
+	}
+}
+
+func TestWorkerDeadLetterWriteFailure(t *testing.T) {
+	handlerErr := errors.New("handler failed")
+	writeErr := errors.New("DLQ write failed")
+	producer := &fakeProducer{err: writeErr}
+	worker := &Worker{
+		producer: producer,
+		config:   Config{Queue: "email"},
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -129,11 +181,11 @@ func TestWorkerRetriesExhausted(t *testing.T) {
 	value := encodeWorkerTestTask(t, Task{Type: "test"}, 0)
 
 	err := worker.handle(context.Background(), value)
-	if !errors.Is(err, handlerErr) || !errors.Is(err, errRetriesExhausted) {
-		t.Fatalf("error = %v, want handler and exhausted errors", err)
+	if !errors.Is(err, handlerErr) || !errors.Is(err, writeErr) {
+		t.Fatalf("error = %v, want handler and DLQ write errors", err)
 	}
-	if producer.record != nil {
-		t.Fatalf("retry record = %v, want nil", producer.record)
+	if producer.record == nil || producer.record.Topic != "email-dlq" {
+		t.Fatalf("dead letter record = %v", producer.record)
 	}
 }
 
