@@ -7,44 +7,20 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type recordWriter interface {
-	Write(context.Context, *kgo.Record) error
-	Close()
-}
-
-type kafkaWriter struct {
-	client *kgo.Client
-}
-
-func (k *kafkaWriter) Write(ctx context.Context, record *kgo.Record) error {
-	return k.client.ProduceSync(ctx, record).FirstErr()
-}
-
-func (k *kafkaWriter) Close() {
-	k.client.Close()
-}
-
 type Client struct {
-	config Config
-	writer recordWriter
+	config   Config
+	producer recordProducer
 }
 
 func NewClient(config Config) (*Client, error) {
-	options, err := config.kafkaOptions(
-		kgo.RequiredAcks(kgo.AllISRAcks()),
-	)
+	producer, err := newKafkaProducer(config)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := kgo.NewClient(options...)
-	if err != nil {
-		return nil, fmt.Errorf("kq: create producer: %w", err)
-	}
-
 	return &Client{
-		config: config,
-		writer: &kafkaWriter{client: client},
+		config:   config,
+		producer: producer,
 	}, nil
 }
 
@@ -62,7 +38,7 @@ func (c *Client) Enqueue(ctx context.Context, task Task) (string, error) {
 		return "", err
 	}
 
-	err = c.writer.Write(ctx, &kgo.Record{
+	err = c.producer.Produce(ctx, &kgo.Record{
 		Topic: c.config.readyTopic(),
 		Key:   []byte(envelope.Id),
 		Value: value,
@@ -75,5 +51,5 @@ func (c *Client) Enqueue(ctx context.Context, task Task) (string, error) {
 }
 
 func (c *Client) Close() {
-	c.writer.Close()
+	c.producer.Close()
 }

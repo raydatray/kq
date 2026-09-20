@@ -9,7 +9,7 @@ import (
 )
 
 func TestWorkerHandlesTask(t *testing.T) {
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	value := encodeWorkerTestTask(t, Task{
 		Type:    "send-email",
 		Payload: []byte("hello"),
@@ -17,7 +17,7 @@ func TestWorkerHandlesTask(t *testing.T) {
 
 	var received Task
 	worker := &Worker{
-		writer: writer,
+		producer: producer,
 		handler: func(_ context.Context, task Task) error {
 			received = task
 			return nil
@@ -33,14 +33,14 @@ func TestWorkerHandlesTask(t *testing.T) {
 	if string(received.Payload) != "hello" {
 		t.Fatalf("payload = %q", received.Payload)
 	}
-	if writer.record != nil {
-		t.Fatalf("retry record = %v, want nil", writer.record)
+	if producer.record != nil {
+		t.Fatalf("retry record = %v, want nil", producer.record)
 	}
 }
 
 func TestWorkerSchedulesRetry(t *testing.T) {
 	handlerErr := errors.New("failed")
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	config := workerRetryConfig(t, 70*time.Second)
 	value := encodeWorkerTestTask(t, Task{Type: "test", Payload: []byte("payload")}, 3)
 	original, err := decodeEnvelope(value)
@@ -54,8 +54,8 @@ func TestWorkerSchedulesRetry(t *testing.T) {
 	})
 
 	worker := &Worker{
-		writer: writer,
-		config: config,
+		producer: producer,
+		config:   config,
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -67,17 +67,17 @@ func TestWorkerSchedulesRetry(t *testing.T) {
 	if policyTaskID != original.Id {
 		t.Fatalf("retry policy task ID = %q, want %q", policyTaskID, original.Id)
 	}
-	if writer.record == nil {
+	if producer.record == nil {
 		t.Fatal("retry record was not written")
 	}
-	if writer.record.Topic != "email-retry-0s" || writer.record.Partition != 2 {
-		t.Fatalf("retry destination = %s/%d", writer.record.Topic, writer.record.Partition)
+	if producer.record.Topic != "email-retry-0s" || producer.record.Partition != 2 {
+		t.Fatalf("retry destination = %s/%d", producer.record.Topic, producer.record.Partition)
 	}
-	if string(writer.record.Key) != original.Id {
-		t.Fatalf("retry key = %q, want %q", writer.record.Key, original.Id)
+	if string(producer.record.Key) != original.Id {
+		t.Fatalf("retry key = %q, want %q", producer.record.Key, original.Id)
 	}
 
-	retried, err := decodeEnvelope(writer.record.Value)
+	retried, err := decodeEnvelope(producer.record.Value)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,10 +101,10 @@ func TestWorkerSchedulesRetry(t *testing.T) {
 func TestWorkerRetryWriteFailure(t *testing.T) {
 	handlerErr := errors.New("handler failed")
 	writeErr := errors.New("write failed")
-	writer := &fakeWriter{err: writeErr}
+	producer := &fakeProducer{err: writeErr}
 	worker := &Worker{
-		writer: writer,
-		config: workerRetryConfig(t, time.Minute),
+		producer: producer,
+		config:   workerRetryConfig(t, time.Minute),
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -119,9 +119,9 @@ func TestWorkerRetryWriteFailure(t *testing.T) {
 
 func TestWorkerRetriesExhausted(t *testing.T) {
 	handlerErr := errors.New("failed")
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	worker := &Worker{
-		writer: writer,
+		producer: producer,
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -132,17 +132,17 @@ func TestWorkerRetriesExhausted(t *testing.T) {
 	if !errors.Is(err, handlerErr) || !errors.Is(err, errRetriesExhausted) {
 		t.Fatalf("error = %v, want handler and exhausted errors", err)
 	}
-	if writer.record != nil {
-		t.Fatalf("retry record = %v, want nil", writer.record)
+	if producer.record != nil {
+		t.Fatalf("retry record = %v, want nil", producer.record)
 	}
 }
 
 func TestWorkerRejectsRetryOutsideGrid(t *testing.T) {
 	handlerErr := errors.New("failed")
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	worker := &Worker{
-		writer: writer,
-		config: workerRetryConfig(t, 3*time.Minute),
+		producer: producer,
+		config:   workerRetryConfig(t, 3*time.Minute),
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -153,17 +153,17 @@ func TestWorkerRejectsRetryOutsideGrid(t *testing.T) {
 	if !errors.Is(err, handlerErr) || !errors.Is(err, ErrRetryDelayOutOfRange) {
 		t.Fatalf("error = %v, want handler and range errors", err)
 	}
-	if writer.record != nil {
-		t.Fatalf("retry record = %v, want nil", writer.record)
+	if producer.record != nil {
+		t.Fatalf("retry record = %v, want nil", producer.record)
 	}
 }
 
 func TestWorkerRejectsInvalidRetryDelay(t *testing.T) {
 	handlerErr := errors.New("failed")
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	worker := &Worker{
-		writer: writer,
-		config: workerRetryConfig(t, -time.Second),
+		producer: producer,
+		config:   workerRetryConfig(t, -time.Second),
 		handler: func(context.Context, Task) error {
 			return handlerErr
 		},
@@ -174,8 +174,8 @@ func TestWorkerRejectsInvalidRetryDelay(t *testing.T) {
 	if !errors.Is(err, handlerErr) || !strings.Contains(err.Error(), "retry delay cannot be negative") {
 		t.Fatalf("error = %v, want handler and invalid delay errors", err)
 	}
-	if writer.record != nil {
-		t.Fatalf("retry record = %v, want nil", writer.record)
+	if producer.record != nil {
+		t.Fatalf("retry record = %v, want nil", producer.record)
 	}
 }
 
