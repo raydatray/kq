@@ -1,0 +1,22 @@
+{
+  "id": "ci-smoke",
+  "arrival": {
+    "target_rps": 100,
+    "duration_seconds": 5
+  },
+  "execution_time_ms": {
+    "average": 5,
+    "p95": 10,
+    "p99": 20
+  },
+  "failures": {
+    "rate": 0.01
+  },
+  "topology": {
+    "producers": 1,
+    "workers": 1,
+    "movers": 1
+  },
+  "random_seed": 1,
+  "warmup_tasks": 10
+}

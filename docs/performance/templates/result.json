@@ -1,0 +1,42 @@
+{
+  "duration_ms": 0,
+  "throughput": {
+    "requested_enqueue_per_second": 0,
+    "achieved_enqueue_per_second": 0,
+    "active_worker_per_second": 0,
+    "drain_per_second": 0,
+    "retry_moves_per_second": 0,
+    "dead_lettered_per_second": 0
+  },
+  "windows_ms": {
+    "enqueue": 0,
+    "active": 0,
+    "drain": 0,
+    "startup": 0
+  },
+  "latency_ms": {
+    "enqueue_p50": 0,
+    "enqueue_p95": 0,
+    "enqueue_p99": 0,
+    "queue_p50": 0,
+    "queue_p95": 0,
+    "queue_p99": 0,
+    "delivery_p50": 0,
+    "delivery_p95": 0,
+    "delivery_p99": 0,
+    "execution_average": 0,
+    "execution_p95": 0,
+    "execution_p99": 0,
+    "retry_lag_p50": 0,
+    "retry_lag_p95": 0,
+    "retry_lag_p99": 0
+  },
+  "correctness": {
+    "produced": 0,
+    "completed": 0,
+    "dead_lettered": 0,
+    "outstanding": 0,
+    "duplicates": 0,
+    "missing": 0
+  }
+}

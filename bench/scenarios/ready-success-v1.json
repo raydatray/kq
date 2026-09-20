@@ -1,0 +1,8 @@
+{
+  "id": "ready-success-v1",
+  "version": 1,
+  "question": "What throughput and latency can the ready path sustain?",
+  "behavior": {
+    "failure_mode": "none"
+  }
+}

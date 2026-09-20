@@ -1,0 +1,22 @@
+{
+  "id": "benchmark",
+  "arrival": {
+    "target_rps": 200,
+    "duration_seconds": 10
+  },
+  "execution_time_ms": {
+    "average": 5,
+    "p95": 10,
+    "p99": 20
+  },
+  "failures": {
+    "rate": 0.01
+  },
+  "topology": {
+    "producers": 2,
+    "workers": 2,
+    "movers": 1
+  },
+  "random_seed": 42,
+  "warmup_tasks": 20
+}

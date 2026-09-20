@@ -1,0 +1,13 @@
+{
+  "id": "execution-latency-v1",
+  "version": 1,
+  "question": "How does handler cost affect saturation?",
+  "behavior": {
+    "failure_mode": "none",
+    "execution_time_ms": {
+      "average": 20,
+      "p95": 50,
+      "p99": 100
+    }
+  }
+}
