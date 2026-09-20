@@ -53,7 +53,9 @@ func run(args []string, eventOutput *os.File) (err error) {
 	switch role {
 	case events.RoleProducer:
 		return roles.RunProducer(ctx, config, output)
-	case events.RoleWorker, events.RoleMover, events.RoleObserver:
+	case events.RoleWorker:
+		return roles.RunWorker(ctx, config, output)
+	case events.RoleMover, events.RoleObserver:
 		return fmt.Errorf("role %q not implemented yet", role)
 	default:
 		return fmt.Errorf("unknown role %q", role)
