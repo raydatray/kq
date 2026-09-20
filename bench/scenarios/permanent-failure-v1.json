@@ -1,0 +1,8 @@
+{
+  "id": "permanent-failure-v1",
+  "version": 1,
+  "question": "Are terminal tasks accounted for under load?",
+  "behavior": {
+    "failure_mode": "permanent"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "temporary-outage-v1",
+  "version": 1,
+  "question": "How does the system recover after an outage?",
+  "behavior": {
+    "failure_mode": "until_time",
+    "outage_duration_ms": 8000
+  }
+}

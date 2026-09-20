@@ -1,0 +1,10 @@
+{
+  "id": "retry-herd-v1",
+  "version": 1,
+  "question": "How quickly and smoothly is retry backlog drained?",
+  "behavior": {
+    "failure_mode": "until_time",
+    "outage_duration_ms": 12000,
+    "failure_rate": 0.5
+  }
+}
