@@ -96,7 +96,10 @@ func (w *Worker) handle(ctx context.Context, value []byte) error {
 	}
 
 	if envelope.Retried >= envelope.Retries {
-		return errors.Join(errRetriesExhausted, handlerErr)
+		if err := w.deadLetter(ctx, envelope, handlerErr); err != nil {
+			return errors.Join(handlerErr, err)
+		}
+		return nil
 	}
 
 	if err := w.scheduleRetry(ctx, envelope, handlerErr); err != nil {
@@ -134,6 +137,27 @@ func (w *Worker) scheduleRetry(ctx context.Context, envelope *kqpb.TaskEnvelope,
 		Key:       []byte(envelope.Id),
 		Value:     value,
 	})
+}
+
+func (w *Worker) deadLetter(ctx context.Context, envelope *kqpb.TaskEnvelope, cause error) error {
+	envelope.LastError = cause.Error()
+	envelope.LastErrorAt = timestamppb.Now()
+
+	value, err := encodeEnvelope(envelope)
+	if err != nil {
+		return err
+	}
+
+	if err := w.producer.Produce(ctx, &kgo.Record{
+		Topic:     w.config.deadLetterTopic(),
+		Partition: 0, // mvp assumed dlq has 1 partition (we should probably make this a different producer that doesnt explicitly specify partition)
+		Key:       []byte(envelope.Id),
+		Value:     value,
+	}); err != nil {
+		return fmt.Errorf("kq: produce task to dlq: %w", err)
+	}
+
+	return nil
 }
 
 func (w *Worker) flushAcks() error {
