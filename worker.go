@@ -116,6 +116,9 @@ func (w *Worker) Run(ctx context.Context) error {
 		if ackErr != nil {
 			ackErr = fmt.Errorf("kq: ack tasks: %w", ackErr)
 		}
+		if ctx.Err() != nil {
+			return ackErr
+		}
 		if err := errors.Join(taskErr, ackErr, pollErr); err != nil {
 			return err
 		}
@@ -143,6 +146,9 @@ func (w *Worker) handle(ctx context.Context, value []byte) error {
 	handlerErr := w.handler(ctx, taskFromEnvelope(envelope))
 	if handlerErr == nil {
 		return nil
+	}
+	if ctx.Err() != nil {
+		return errors.Join(handlerErr, ctx.Err())
 	}
 
 	if envelope.Retried >= envelope.Retries {

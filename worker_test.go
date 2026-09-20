@@ -14,12 +14,16 @@ import (
 )
 
 type fakeShareGroupConsumer struct {
-	mu         sync.Mutex
-	results    []sharePollResult
-	pollLimits []int
-	acks       map[*kgo.Record][]kgo.AckStatus
-	flushes    int
-	flushErr   error
+	mu           sync.Mutex
+	results      []sharePollResult
+	pollLimits   []int
+	acks         map[*kgo.Record][]kgo.AckStatus
+	ackOrder     []*kgo.Record
+	acked        chan *kgo.Record
+	flushes      int
+	flushErr     error
+	flushStarted chan struct{}
+	flushRelease chan struct{}
 }
 
 func (c *fakeShareGroupConsumer) Poll(ctx context.Context, limit int) sharePollResult {
@@ -39,21 +43,53 @@ func (c *fakeShareGroupConsumer) Poll(ctx context.Context, limit int) sharePollR
 
 func (c *fakeShareGroupConsumer) Ack(record *kgo.Record, status kgo.AckStatus) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.acks == nil {
 		c.acks = make(map[*kgo.Record][]kgo.AckStatus)
 	}
 	c.acks[record] = append(c.acks[record], status)
+	c.ackOrder = append(c.ackOrder, record)
+	acked := c.acked
+	c.mu.Unlock()
+	if acked != nil {
+		acked <- record
+	}
 }
 
 func (c *fakeShareGroupConsumer) FlushAcks(context.Context) error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.flushes++
-	return c.flushErr
+	err := c.flushErr
+	started := c.flushStarted
+	release := c.flushRelease
+	c.mu.Unlock()
+	if started != nil {
+		started <- struct{}{}
+	}
+	if release != nil {
+		<-release
+	}
+	return err
 }
 
 func (*fakeShareGroupConsumer) Close() {}
+
+func (c *fakeShareGroupConsumer) pollCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.pollLimits)
+}
+
+func (c *fakeShareGroupConsumer) statuses(record *kgo.Record) []kgo.AckStatus {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]kgo.AckStatus(nil), c.acks[record]...)
+}
+
+func (c *fakeShareGroupConsumer) flushCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.flushes
+}
 
 func TestWorkerProcessesBoundedPollGeneration(t *testing.T) {
 	records := []*kgo.Record{
@@ -149,6 +185,169 @@ func TestWorkerExecutesGenerationConcurrently(t *testing.T) {
 	close(release)
 	if err := <-done; err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestWorkerFlushesGenerationBeforeNextPoll(t *testing.T) {
+	records := []*kgo.Record{
+		{Value: encodeWorkerTestTask(t, Task{Type: "first"}, 0)},
+		{Value: encodeWorkerTestTask(t, Task{Type: "second"}, 0)},
+	}
+	consumer := &fakeShareGroupConsumer{
+		results: []sharePollResult{
+			{records: records[:1]},
+			{records: records[1:]},
+			{closed: true},
+		},
+		flushStarted: make(chan struct{}, 2),
+		flushRelease: make(chan struct{}),
+	}
+	worker := &Worker{
+		consumer: consumer,
+		producer: new(fakeProducer),
+		config:   WorkerConfig{Concurrency: 1},
+		handler:  func(context.Context, Task) error { return nil },
+	}
+	done := make(chan error, 1)
+	go func() { done <- worker.Run(context.Background()) }()
+
+	<-consumer.flushStarted
+	if got := consumer.pollCount(); got != 1 {
+		t.Fatalf("polls during first flush = %d, want 1", got)
+	}
+	consumer.flushRelease <- struct{}{}
+	<-consumer.flushStarted
+	if got := consumer.pollCount(); got != 2 {
+		t.Fatalf("polls during second flush = %d, want 2", got)
+	}
+	consumer.flushRelease <- struct{}{}
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	if got := consumer.pollCount(); got != 3 {
+		t.Fatalf("total polls = %d, want 3", got)
+	}
+}
+
+func TestWorkerAcknowledgesTasksAsTheyFinish(t *testing.T) {
+	slow := &kgo.Record{Value: encodeWorkerTestTask(t, Task{Type: "slow"}, 0)}
+	fast := &kgo.Record{Value: encodeWorkerTestTask(t, Task{Type: "fast"}, 0)}
+	consumer := &fakeShareGroupConsumer{
+		results: []sharePollResult{{records: []*kgo.Record{slow, fast}}, {closed: true}},
+		acked:   make(chan *kgo.Record, 2),
+	}
+	slowStarted := make(chan struct{})
+	releaseSlow := make(chan struct{})
+	worker := &Worker{
+		consumer: consumer,
+		producer: new(fakeProducer),
+		config:   WorkerConfig{Concurrency: 2},
+		handler: func(_ context.Context, task Task) error {
+			if task.Type == "slow" {
+				close(slowStarted)
+				<-releaseSlow
+			}
+			return nil
+		},
+	}
+	done := make(chan error, 1)
+	go func() { done <- worker.Run(context.Background()) }()
+
+	<-slowStarted
+	if first := <-consumer.acked; first != fast {
+		t.Fatalf("first acknowledged record = %p, want fast record %p", first, fast)
+	}
+	close(releaseSlow)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestWorkerJoinsConcurrentTaskAndFlushErrors(t *testing.T) {
+	first := errors.New("first handler failed")
+	second := errors.New("second handler failed")
+	writeErr := errors.New("retry write failed")
+	flushErr := errors.New("ack flush failed")
+	records := []*kgo.Record{
+		{Value: encodeWorkerTestTask(t, Task{Type: "first"}, 1)},
+		{Value: encodeWorkerTestTask(t, Task{Type: "second"}, 1)},
+	}
+	consumer := &fakeShareGroupConsumer{
+		results:  []sharePollResult{{records: records}},
+		flushErr: flushErr,
+	}
+	config := workerRetryConfig(t, time.Minute)
+	config.Concurrency = 2
+	worker := &Worker{
+		consumer: consumer,
+		producer: &fakeProducer{err: writeErr},
+		config:   config,
+		handler: func(_ context.Context, task Task) error {
+			if task.Type == "first" {
+				return first
+			}
+			return second
+		},
+	}
+
+	err := worker.Run(context.Background())
+	for _, want := range []error{first, second, writeErr, flushErr} {
+		if !errors.Is(err, want) {
+			t.Fatalf("error = %v, want cause %v", err, want)
+		}
+	}
+	for _, record := range records {
+		statuses := consumer.statuses(record)
+		if len(statuses) != 1 || statuses[0] != kgo.AckRelease {
+			t.Fatalf("statuses = %v, want [release]", statuses)
+		}
+	}
+}
+
+func TestWorkerCancellationDrainsPool(t *testing.T) {
+	const concurrency = 4
+	records := make([]*kgo.Record, 0, concurrency)
+	for i := range concurrency {
+		records = append(records, &kgo.Record{
+			Value: encodeWorkerTestTask(t, Task{Type: fmt.Sprintf("task-%d", i)}, 0),
+		})
+	}
+	consumer := &fakeShareGroupConsumer{results: []sharePollResult{{records: records}}}
+	started := make(chan struct{}, concurrency)
+	worker := &Worker{
+		consumer: consumer,
+		producer: new(fakeProducer),
+		config:   WorkerConfig{Concurrency: concurrency},
+		handler: func(ctx context.Context, _ Task) error {
+			started <- struct{}{}
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- worker.Run(ctx) }()
+
+	for range concurrency {
+		<-started
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("worker did not drain canceled pool")
+	}
+	for _, record := range records {
+		statuses := consumer.statuses(record)
+		if len(statuses) != 1 || statuses[0] != kgo.AckRelease {
+			t.Fatalf("statuses = %v, want [release]", statuses)
+		}
+	}
+	if got := consumer.flushCount(); got != 1 {
+		t.Fatalf("flushes = %d, want 1", got)
 	}
 }
 
