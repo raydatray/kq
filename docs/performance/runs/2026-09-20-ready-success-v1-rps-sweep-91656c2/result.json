@@ -1,0 +1,89 @@
+{
+  "capacity": {
+    "estimated_service_ceiling_per_second": 312,
+    "highest_sustainable_tested_rps": 300,
+    "first_overloaded_tested_rps": 325,
+    "recommended_rps_with_headroom": 250
+  },
+  "correctness": {
+    "dead_lettered": 0,
+    "duplicates": 0,
+    "missing": 0,
+    "outstanding": 0,
+    "produced": 23750
+  },
+  "sweep": [
+    {
+      "requested_rps": 200,
+      "achieved_enqueue_rps": 200.048,
+      "active_worker_rps": 200.473,
+      "queue_p95_ms": 4.32,
+      "delivery_p95_ms": 14.848,
+      "drain_ms": 1.345,
+      "execution_average_ms": 4.866,
+      "execution_p95_ms": 13.011,
+      "execution_p99_ms": 19.028,
+      "execution_max_ms": 51.036
+    },
+    {
+      "requested_rps": 300,
+      "achieved_enqueue_rps": 300.031,
+      "active_worker_rps": 300.547,
+      "queue_p95_ms": 48.825,
+      "delivery_p95_ms": 53.51,
+      "drain_ms": 6.369,
+      "execution_average_ms": 4.878,
+      "execution_p95_ms": 12.406,
+      "execution_p99_ms": 20.048,
+      "execution_max_ms": 51.498
+    },
+    {
+      "requested_rps": 325,
+      "achieved_enqueue_rps": 325.031,
+      "active_worker_rps": 314.401,
+      "queue_p95_ms": 379.62,
+      "delivery_p95_ms": 383.52,
+      "drain_ms": 371.459,
+      "execution_average_ms": 4.887,
+      "execution_p95_ms": 12.891,
+      "execution_p99_ms": 20.918,
+      "execution_max_ms": 52.049
+    },
+    {
+      "requested_rps": 350,
+      "achieved_enqueue_rps": 349.901,
+      "active_worker_rps": 311.243,
+      "queue_p95_ms": 1182.877,
+      "delivery_p95_ms": 1187.907,
+      "drain_ms": 1273.003,
+      "execution_average_ms": 4.89,
+      "execution_p95_ms": 12.922,
+      "execution_p99_ms": 20.215,
+      "execution_max_ms": 51.505
+    },
+    {
+      "requested_rps": 400,
+      "achieved_enqueue_rps": 400.019,
+      "active_worker_rps": 310.527,
+      "queue_p95_ms": 2807.807,
+      "delivery_p95_ms": 2811.312,
+      "drain_ms": 2917.746,
+      "execution_average_ms": 4.86,
+      "execution_p95_ms": 12.835,
+      "execution_p99_ms": 20.048,
+      "execution_max_ms": 52.027
+    },
+    {
+      "requested_rps": 800,
+      "achieved_enqueue_rps": 799.753,
+      "active_worker_rps": 283.806,
+      "queue_p95_ms": 17368.76,
+      "delivery_p95_ms": 17371.031,
+      "drain_ms": 18210.321,
+      "execution_average_ms": 4.895,
+      "execution_p95_ms": 12.606,
+      "execution_p99_ms": 20.231,
+      "execution_max_ms": 52.042
+    }
+  ]
+}
