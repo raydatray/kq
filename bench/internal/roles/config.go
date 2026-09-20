@@ -35,10 +35,16 @@ type TopologyConfig struct {
 }
 
 type WorkloadConfig struct {
-	Arrival       ArrivalConfig                `json:"arrival"`
+	Arrival       ArrivalConfig                 `json:"arrival"`
 	ExecutionTime workload.DurationDistribution `json:"execution_time_ms"`
 	Failures      workload.FailureConfig        `json:"failures"`
 	RandomSeed    uint64                        `json:"random_seed"`
+	Warmup        WarmupConfig                  `json:"warmup"`
+}
+
+type WarmupConfig struct {
+	Tasks  int    `json:"tasks"`
+	IDBase uint64 `json:"id_base"`
 }
 
 type ArrivalConfig struct {
@@ -92,6 +98,9 @@ func (c Config) Validate() error {
 	if c.Workload.Arrival.DurationSeconds <= 0 {
 		return errors.New("roles: arrival duration must be positive")
 	}
+	if c.Workload.Warmup.Tasks < 0 {
+		return errors.New("roles: warm-up task count cannot be negative")
+	}
 	return c.ToWorkloadConfig().Validate()
 }
 
@@ -110,6 +119,14 @@ func (c Config) WorkloadIDs() []uint64 {
 
 func (c Config) DueAt(started time.Time, id uint64) time.Time {
 	return started.Add(time.Duration(id) * time.Second / time.Duration(c.Workload.Arrival.TargetRPS))
+}
+
+func (c Config) WarmupIDs() []uint64 {
+	var ids []uint64
+	for i := 0; i < c.Workload.Warmup.Tasks; i++ {
+		ids = append(ids, c.Workload.Warmup.IDBase+uint64(i))
+	}
+	return ids
 }
 
 func (c Config) ToWorkloadConfig() workload.Config {
