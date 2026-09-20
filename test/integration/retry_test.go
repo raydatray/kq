@@ -49,7 +49,7 @@ func TestTaskRetriesAndSucceeds(t *testing.T) {
 	var attempts atomic.Int32
 	deliveries := make(chan delivery, 2)
 	handlerErr := errors.New("temporary failure")
-	worker, err := kq.NewWorker(config, func(_ context.Context, task kq.Task) error {
+	worker, err := kq.NewWorker(kq.WorkerConfig{Config: config, Concurrency: 1}, func(_ context.Context, task kq.Task) error {
 		attempt := attempts.Add(1)
 		deliveries <- delivery{task: task, attempt: attempt, at: time.Now()}
 		if attempt == 1 {

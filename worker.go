@@ -17,22 +17,25 @@ type Handler func(context.Context, Task) error
 type Worker struct {
 	consumer shareGroupConsumer
 	producer recordProducer
-	config   Config
+	config   WorkerConfig
 	handler  Handler
 }
 
-func NewWorker(config Config, handler Handler) (*Worker, error) {
+func NewWorker(config WorkerConfig, handler Handler) (*Worker, error) {
 	if handler == nil {
 		return nil, errors.New("kq: handler cannot be nil")
 	}
+	if err := config.validate(); err != nil {
+		return nil, err
+	}
 
-	consumer, err := newKafkaShareGroupConsumer(config)
+	consumer, err := newKafkaShareGroupConsumer(config.Config)
 	if err != nil {
 		return nil, err
 	}
 
 	producer, err := newKafkaProducer(
-		config,
+		config.Config,
 		kgo.RecordPartitioner(kgo.ManualPartitioner()),
 	)
 	if err != nil {
