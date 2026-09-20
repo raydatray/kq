@@ -7,6 +7,7 @@
   "topology": {
     "producers": 2,
     "workers": 2,
+    "worker_concurrency": 1,
     "movers": 1
   },
   "random_seed": 42,

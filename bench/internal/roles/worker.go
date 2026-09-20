@@ -17,7 +17,10 @@ func RunWorker(ctx context.Context, config Config, output *events.Writer) error 
 	if err != nil {
 		return err
 	}
-	worker, err := kq.NewWorker(kq.WorkerConfig{Config: kqConfig, Concurrency: 1}, func(handlerCtx context.Context, task kq.Task) error {
+	worker, err := kq.NewWorker(kq.WorkerConfig{
+		Config:      kqConfig,
+		Concurrency: config.Topology.WorkerConcurrency,
+	}, func(handlerCtx context.Context, task kq.Task) error {
 		return handle(handlerCtx, config.ProcessIndex, task, output)
 	})
 	if err != nil {
