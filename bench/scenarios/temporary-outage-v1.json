@@ -1,0 +1,15 @@
+{
+  "id": "temporary-outage-v1",
+  "version": 1,
+  "description": "Measures retry recovery after a deterministic temporary outage.",
+  "behavior": {
+    "failure_mode": "until_time",
+    "failure_rate": 0.01,
+    "outage_duration_ms": 8000,
+    "execution_time_ms": {
+      "average": 5,
+      "p95": 10,
+      "p99": 20
+    }
+  }
+}
