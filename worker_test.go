@@ -3,8 +3,10 @@ package kq
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -62,13 +64,13 @@ func TestWorkerProcessesBoundedPollGeneration(t *testing.T) {
 		{records: records},
 		{closed: true},
 	}}
-	var handled []string
+	handled := make(chan string, len(records))
 	worker := &Worker{
 		consumer:    consumer,
 		producer:    new(fakeProducer),
 		concurrency: 3,
 		handler: func(_ context.Context, task Task) error {
-			handled = append(handled, task.Type)
+			handled <- task.Type
 			return nil
 		},
 	}
@@ -76,8 +78,12 @@ func TestWorkerProcessesBoundedPollGeneration(t *testing.T) {
 	if err := worker.Run(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(handled, ","); got != "first,second" {
-		t.Fatalf("handled = %q, want first,second", got)
+	seen := make(map[string]bool)
+	for range records {
+		seen[<-handled] = true
+	}
+	if !seen["first"] || !seen["second"] {
+		t.Fatalf("handled = %v, want first and second", seen)
 	}
 	if len(consumer.pollLimits) != 2 || consumer.pollLimits[0] != 3 || consumer.pollLimits[1] != 3 {
 		t.Fatalf("poll limits = %v, want [3 3]", consumer.pollLimits)
@@ -90,6 +96,59 @@ func TestWorkerProcessesBoundedPollGeneration(t *testing.T) {
 	}
 	if consumer.flushes != 1 {
 		t.Fatalf("flushes = %d, want 1", consumer.flushes)
+	}
+}
+
+func TestWorkerExecutesGenerationConcurrently(t *testing.T) {
+	const concurrency = 4
+	records := make([]*kgo.Record, 0, concurrency)
+	for i := range concurrency {
+		records = append(records, &kgo.Record{
+			Value: encodeWorkerTestTask(t, Task{Type: fmt.Sprintf("task-%d", i)}, 0),
+		})
+	}
+	consumer := &fakeShareGroupConsumer{results: []sharePollResult{
+		{records: records},
+		{closed: true},
+	}}
+	started := make(chan struct{}, concurrency)
+	release := make(chan struct{})
+	var active atomic.Int32
+	var maximum atomic.Int32
+	worker := &Worker{
+		consumer:    consumer,
+		producer:    new(fakeProducer),
+		concurrency: concurrency,
+		handler: func(context.Context, Task) error {
+			current := active.Add(1)
+			for {
+				prior := maximum.Load()
+				if current <= prior || maximum.CompareAndSwap(prior, current) {
+					break
+				}
+			}
+			started <- struct{}{}
+			<-release
+			active.Add(-1)
+			return nil
+		},
+	}
+	done := make(chan error, 1)
+	go func() { done <- worker.Run(context.Background()) }()
+
+	for range concurrency {
+		select {
+		case <-started:
+		case <-time.After(time.Second):
+			t.Fatal("generation did not execute concurrently")
+		}
+	}
+	if got := maximum.Load(); got != concurrency {
+		t.Fatalf("maximum concurrency = %d, want %d", got, concurrency)
+	}
+	close(release)
+	if err := <-done; err != nil {
+		t.Fatal(err)
 	}
 }
 
