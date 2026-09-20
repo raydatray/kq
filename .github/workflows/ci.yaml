@@ -52,3 +52,38 @@ jobs:
           cache: true
       - run: go test ./...
       - run: sh test/integration/run.sh
+
+  harness-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --project bench python -m unittest kqbench.test_accounting -v
+
+  performance:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - ready-success-v1
+          - execution-latency-v1
+          - permanent-failure-v1
+          - temporary-outage-v1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: astral-sh/setup-uv@v6
+      - run: |
+          uv run --project bench kq-bench run \
+            --scenario "${{ matrix.scenario }}" \
+            --profile ci-smoke \
+            --output artifacts/performance
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: performance-${{ matrix.scenario }}
+          path: artifacts/performance
