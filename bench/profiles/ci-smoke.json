@@ -9,5 +9,6 @@
     "workers": 1,
     "movers": 1
   },
-  "random_seed": 1
+  "random_seed": 1,
+  "warmup_tasks": 10
 }
