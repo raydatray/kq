@@ -1,0 +1,80 @@
+{
+  "run_id": "2026-09-20-ready-success-v1-worker-concurrency-sweep-867941d",
+  "created_at": "2026-09-20T05:47:53Z",
+  "revision": "867941dcc3a0",
+  "purpose": "Measure ready-path throughput and latency as fixed in-process worker concurrency increases.",
+  "scenario": {
+    "id": "ready-success-v1",
+    "version": 1
+  },
+  "profile": "benchmark",
+  "environment": {
+    "architecture": "arm64",
+    "ci_provider": "",
+    "cpu_count": 12,
+    "go_version": "go version go1.27.0 darwin/arm64",
+    "kafka_version": "apache/kafka:4.3.1",
+    "operating_system": "Darwin",
+    "python_version": "3.13.9",
+    "runner": "rays-MacBook-Pro.local"
+  },
+  "topology": {
+    "movers": 1,
+    "producers": 2,
+    "ready_partitions": 1,
+    "retry_partitions": 4,
+    "worker_concurrency_sweep": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "workers": 2
+  },
+  "workload": {
+    "arrival": {
+      "duration_seconds": 10,
+      "target_rps_sweep": [
+        200,
+        300,
+        325,
+        400,
+        800
+      ]
+    },
+    "execution_time_ms": {
+      "average": 5,
+      "p95": 10,
+      "p99": 20
+    },
+    "failures": {
+      "mode": "none",
+      "rate": 0
+    },
+    "random_seed": 42,
+    "warmup_tasks": 20
+  },
+  "source_runs": [
+    "2026-09-20-ready-success-v1-867941d-2",
+    "2026-09-20-ready-success-v1-867941d-3",
+    "2026-09-20-ready-success-v1-867941d-4",
+    "2026-09-20-ready-success-v1-867941d-5",
+    "2026-09-20-ready-success-v1-867941d-6",
+    "2026-09-20-ready-success-v1-867941d-7",
+    "2026-09-20-ready-success-v1-867941d-8",
+    "2026-09-20-ready-success-v1-867941d-9",
+    "2026-09-20-ready-success-v1-867941d-10",
+    "2026-09-20-ready-success-v1-867941d-11",
+    "2026-09-20-ready-success-v1-867941d-12",
+    "2026-09-20-ready-success-v1-867941d-13",
+    "2026-09-20-ready-success-v1-867941d-14",
+    "2026-09-20-ready-success-v1-867941d-15",
+    "2026-09-20-ready-success-v1-867941d-16",
+    "2026-09-20-ready-success-v1-867941d-17",
+    "2026-09-20-ready-success-v1-867941d-18",
+    "2026-09-20-ready-success-v1-867941d-19",
+    "2026-09-20-ready-success-v1-867941d-20",
+    "2026-09-20-ready-success-v1-867941d-21"
+  ],
+  "notes": "All source runs use revision 867941dcc3a0. Only topology.worker_concurrency and workload.arrival.target_rps varied."
+}
