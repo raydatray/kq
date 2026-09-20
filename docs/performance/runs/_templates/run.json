@@ -2,7 +2,7 @@
   "run_id": "<date>-<scenario>-<revision>",
   "created_at": "<RFC3339>",
   "revision": "<commit>",
-  "purpose": "<question this run answers>",
+  "purpose": "<scenario description or ad hoc purpose>",
   "scenario": null,
   "profile": "<profile>",
   "command": "<exact command>",

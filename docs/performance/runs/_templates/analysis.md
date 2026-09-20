@@ -9,7 +9,7 @@ retained diagnostics.
 
 ## Purpose
 
-Restate the catalogue scenario question or ad hoc purpose from `run.json`.
+Restate the catalogue scenario description or ad hoc purpose from `run.json`.
 
 ## Observations
 
