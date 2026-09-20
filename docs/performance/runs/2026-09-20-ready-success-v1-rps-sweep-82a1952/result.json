@@ -1,0 +1,65 @@
+{
+  "capacity": {
+    "estimated_service_ceiling_per_second": 312,
+    "highest_sustainable_tested_rps": 300,
+    "first_overloaded_tested_rps": 325,
+    "recommended_rps_with_headroom": 250
+  },
+  "correctness": {
+    "dead_lettered": 0,
+    "duplicates": 0,
+    "missing": 0,
+    "outstanding": 0,
+    "produced": 23750
+  },
+  "sweep": [
+    {
+      "requested_rps": 200,
+      "achieved_enqueue_rps": 200.054,
+      "active_worker_rps": 200.461,
+      "queue_p95_ms": 4.355,
+      "delivery_p95_ms": 14.453,
+      "drain_ms": 3.501
+    },
+    {
+      "requested_rps": 300,
+      "achieved_enqueue_rps": 300.044,
+      "active_worker_rps": 300.199,
+      "queue_p95_ms": 87.734,
+      "delivery_p95_ms": 92.724,
+      "drain_ms": 19.691
+    },
+    {
+      "requested_rps": 325,
+      "achieved_enqueue_rps": 325.033,
+      "active_worker_rps": 314.496,
+      "queue_p95_ms": 377.232,
+      "delivery_p95_ms": 381.694,
+      "drain_ms": 367.357
+    },
+    {
+      "requested_rps": 350,
+      "achieved_enqueue_rps": 350.055,
+      "active_worker_rps": 311.661,
+      "queue_p95_ms": 1193.617,
+      "delivery_p95_ms": 1197.076,
+      "drain_ms": 1265.585
+    },
+    {
+      "requested_rps": 400,
+      "achieved_enqueue_rps": 400.042,
+      "active_worker_rps": 308.796,
+      "queue_p95_ms": 2809.256,
+      "delivery_p95_ms": 2824.929,
+      "drain_ms": 2978.635
+    },
+    {
+      "requested_rps": 800,
+      "achieved_enqueue_rps": 800.0,
+      "active_worker_rps": 283.225,
+      "queue_p95_ms": 17530.235,
+      "delivery_p95_ms": 17534.613,
+      "drain_ms": 18280.911
+    }
+  ]
+}
