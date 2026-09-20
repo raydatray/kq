@@ -2,6 +2,7 @@ package kq
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,12 +10,17 @@ import (
 )
 
 type fakeProducer struct {
-	record *kgo.Record
-	err    error
+	mu      sync.Mutex
+	record  *kgo.Record
+	records []*kgo.Record
+	err     error
 }
 
 func (p *fakeProducer) Produce(_ context.Context, record *kgo.Record) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.record = record
+	p.records = append(p.records, record)
 	return p.err
 }
 
