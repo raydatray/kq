@@ -1,0 +1,14 @@
+{
+  "id": "permanent-failure-v1",
+  "version": 1,
+  "description": "Measures retry and DLQ accounting for deterministic permanent failures.",
+  "behavior": {
+    "failure_mode": "permanent",
+    "failure_rate": 0.01,
+    "execution_time_ms": {
+      "average": 5,
+      "p95": 10,
+      "p99": 20
+    }
+  }
+}

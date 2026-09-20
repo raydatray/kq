@@ -1,0 +1,13 @@
+{
+  "id": "local-baseline",
+  "arrival": {
+    "target_rps": 200,
+    "duration_seconds": 10
+  },
+  "topology": {
+    "producers": 2,
+    "workers": 2,
+    "movers": 1
+  },
+  "random_seed": 42
+}
