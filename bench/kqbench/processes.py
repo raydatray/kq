@@ -64,6 +64,11 @@ class ManagedProcess:
     def wait(self, timeout: float | None = None) -> int:
         return self.proc.wait(timeout=timeout)
 
+    def join_reader(self, timeout: float | None = None) -> None:
+        # The reader exits on stdout EOF once the process is gone; joining
+        # guarantees collect_events sees trailing lines after shutdown.
+        self._reader.join(timeout=timeout)
+
     def terminate(self) -> None:
         try:
             if self.proc.poll() is None:
@@ -151,6 +156,20 @@ def collect_events(processes: list[ManagedProcess]) -> list[dict[str, Any]]:
     return events
 
 
+def start_warmup_producer(
+    binary: Path,
+    resolved_path: Path,
+    log_dir: Path,
+) -> ManagedProcess:
+    """Start one producer that bursts the warm-up range and exits."""
+    log_dir.mkdir(parents=True, exist_ok=True)
+    event_log = log_dir / "producer-warmup.log"
+    stderr_file = (log_dir / "producer-warmup.log.stderr").open("w", encoding="utf-8")
+    command = [str(binary), "producer", "--config", str(resolved_path), "--warmup-only"]
+    proc = start_process(command, stderr_file)
+    return ManagedProcess("producer", 0, proc, event_log, stderr_file)
+
+
 def wait_until_ready(processes: list[ManagedProcess], timeout: float) -> None:
     deadline = time.time() + timeout
     expected = {(process.role, process.index) for process in processes}
@@ -202,4 +221,5 @@ def stop_processes(processes: list[ManagedProcess], grace_seconds: float = 10) -
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
             pass
+        process.join_reader(timeout=5)
         process.close()

@@ -29,6 +29,7 @@ func run(args []string, _ *os.File) error {
 	flags := flag.NewFlagSet(role, flag.ContinueOnError)
 	configPath := flags.String("config", "", "resolved run configuration path")
 	index := flags.Int("index", 0, "zero-based process index within the role")
+	warmupOnly := flags.Bool("warmup-only", false, "producer enqueues the warm-up range and exits")
 	if err := flags.Parse(args[1:]); err != nil {
 		return err
 	}
@@ -47,9 +48,13 @@ func run(args []string, _ *os.File) error {
 
 	output := events.NewWriter(os.Stdout)
 
+	if *warmupOnly && role != events.RoleProducer {
+		return fmt.Errorf("--warmup-only applies to the producer role only")
+	}
+
 	switch role {
 	case events.RoleProducer:
-		return roles.RunProducer(ctx, config, output)
+		return roles.RunProducer(ctx, config, output, *warmupOnly)
 	case events.RoleWorker:
 		return roles.RunWorker(ctx, config, output)
 	case events.RoleMover:

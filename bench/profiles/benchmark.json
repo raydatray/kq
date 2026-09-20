@@ -17,5 +17,6 @@
     "workers": 2,
     "movers": 1
   },
-  "random_seed": 42
+  "random_seed": 42,
+  "warmup_tasks": 20
 }
