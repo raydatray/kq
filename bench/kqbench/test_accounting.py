@@ -90,6 +90,22 @@ class AccountingTest(unittest.TestCase):
         correctness = account(events)
         self.assertEqual(correctness.dead_lettered, 0)
 
+    def test_excluded_ids_skipped(self) -> None:
+        warmup = 1 << 32
+        events = [
+            event("enqueue_finished", 1, result="success"),
+            event("handler_started", 1),
+            event("handler_finished", 1, result="success"),
+            event("enqueue_finished", warmup, result="success"),
+            event("handler_started", warmup),
+            event("handler_finished", warmup, result="success"),
+        ]
+        correctness = account(events, exclude=frozenset({warmup}))
+        self.assertEqual(correctness.produced, 1)
+        self.assertEqual(correctness.completed, 1)
+        self.assertEqual(correctness.duplicates, 0)
+        self.assertEqual(correctness.missing, [])
+
 
 class PercentileTest(unittest.TestCase):
     def test_empty(self) -> None:
