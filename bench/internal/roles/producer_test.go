@@ -16,9 +16,10 @@ func testProducerConfig() Config {
 			RetryGridPartitions:   4,
 		},
 		Topology: TopologyConfig{
-			Producers: 2,
-			Workers:   1,
-			Movers:    1,
+			Producers:         2,
+			Workers:           1,
+			WorkerConcurrency: 1,
+			Movers:            1,
 		},
 		Workload: WorkloadConfig{
 			Arrival: ArrivalConfig{
@@ -122,6 +123,11 @@ func TestConfigValidation(t *testing.T) {
 	bad.Topology.Producers = 0
 	if err := bad.Validate(); err == nil {
 		t.Fatal("expected producer count error")
+	}
+	bad = good
+	bad.Topology.WorkerConcurrency = 0
+	if err := bad.Validate(); err == nil {
+		t.Fatal("expected worker concurrency error")
 	}
 	bad = good
 	bad.KQ.Brokers = nil

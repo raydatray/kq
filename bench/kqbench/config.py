@@ -78,6 +78,7 @@ def resolve_run(args: argparse.Namespace) -> dict[str, Any]:
         "retry_partitions": topology_profile.get("retry_partitions", 4),
         "producers": topology_profile.get("producers", 1),
         "workers": topology_profile.get("workers", 1),
+        "worker_concurrency": topology_profile.get("worker_concurrency", 1),
         "movers": topology_profile.get("movers", 1),
     }
     if "topology" in adhoc:
@@ -210,7 +211,7 @@ def validate_resolved_config(resolved: dict[str, Any]) -> None:
         raise ValueError(f"unknown failure mode {failures['mode']!r}")
     if not 0 <= float(failures["rate"]) <= 1:
         raise ValueError("failures.rate must be between 0 and 1")
-    for key in ("producers", "workers", "movers"):
+    for key in ("producers", "workers", "worker_concurrency", "movers"):
         if int(topology[key]) <= 0:
             raise ValueError(f"topology.{key} must be positive")
     if not kq.get("brokers"):

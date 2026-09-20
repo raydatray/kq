@@ -21,6 +21,7 @@
     "retry_partitions": 0,
     "producers": 0,
     "workers": 0,
+    "worker_concurrency": 0,
     "movers": 0
   },
   "workload": {
