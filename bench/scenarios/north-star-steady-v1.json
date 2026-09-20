@@ -1,0 +1,13 @@
+{
+  "id": "north-star-steady-v1",
+  "version": 1,
+  "description": "Production-representative steady workload targeting 20,000 tasks per second; the 475 ms p95 is provisional pending measured production data.",
+  "behavior": {
+    "failure_mode": "none",
+    "execution_time_ms": {
+      "average": 250,
+      "p95": 475,
+      "p99": 646
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "ready-success-v1",
+  "version": 1,
+  "description": "Measures sustainable ready-path throughput and latency.",
+  "behavior": {
+    "failure_mode": "none",
+    "execution_time_ms": {
+      "average": 5,
+      "p99": 20
+    }
+  }
+}

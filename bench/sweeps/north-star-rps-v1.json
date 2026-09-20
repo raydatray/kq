@@ -1,0 +1,15 @@
+{
+  "id": "north-star-rps-v1",
+  "description": "Find the sustainable throughput knee around the 20k RPS target.",
+  "scenario": "north-star-steady-v1",
+  "target_rps": [
+    5000,
+    10000,
+    15000,
+    18000,
+    20000,
+    22000,
+    25000
+  ],
+  "repetitions": 3
+}
