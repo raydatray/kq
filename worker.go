@@ -15,8 +15,8 @@ import (
 type Handler func(context.Context, Task) error
 
 type Worker struct {
-	consumer *kgo.Client
-	writer   recordWriter
+	consumer shareGroupConsumer
+	producer recordProducer
 	config   Config
 	handler  Handler
 }
@@ -26,23 +26,13 @@ func NewWorker(config Config, handler Handler) (*Worker, error) {
 		return nil, errors.New("kq: handler cannot be nil")
 	}
 
-	consumerOptions, err := config.kafkaOptions(
-		kgo.ConsumeTopics(config.readyTopic()),
-		kgo.ShareGroup(config.workerGroup()),
-		kgo.ShareMaxRecords(1),
-		kgo.ShareMaxRecordsStrict(),
-	)
+	consumer, err := newKafkaShareGroupConsumer(config)
 	if err != nil {
 		return nil, err
 	}
 
-	consumer, err := kgo.NewClient(consumerOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("kq: create worker consumer: %w", err)
-	}
-
-	producerOptions, err := config.kafkaOptions(
-		kgo.RequiredAcks(kgo.AllISRAcks()),
+	producer, err := newKafkaProducer(
+		config,
 		kgo.RecordPartitioner(kgo.ManualPartitioner()),
 	)
 	if err != nil {
@@ -50,15 +40,9 @@ func NewWorker(config Config, handler Handler) (*Worker, error) {
 		return nil, err
 	}
 
-	producer, err := kgo.NewClient(producerOptions...)
-	if err != nil {
-		consumer.Close()
-		return nil, fmt.Errorf("kq: create retry producer: %w", err)
-	}
-
 	return &Worker{
 		consumer: consumer,
-		writer:   &kafkaWriter{client: producer},
+		producer: producer,
 		config:   config,
 		handler:  handler,
 	}, nil
@@ -66,23 +50,22 @@ func NewWorker(config Config, handler Handler) (*Worker, error) {
 
 func (w *Worker) Run(ctx context.Context) error {
 	for {
-		fetches := w.consumer.PollRecords(ctx, 1)
-		records := fetches.Records()
+		result := w.consumer.Poll(ctx)
 
-		if len(records) == 0 {
+		if result.record == nil {
 			switch {
 			case ctx.Err() != nil:
 				return nil
-			case fetches.IsClientClosed():
+			case result.closed:
 				return nil
-			case fetches.Err() != nil:
-				return fmt.Errorf("kq: poll ready queue: %w", fetches.Err())
+			case result.err != nil:
+				return fmt.Errorf("kq: poll ready queue: %w", result.err)
 			default:
 				continue
 			}
 		}
 
-		record := records[0]
+		record := result.record
 		taskErr := w.handle(ctx, record.Value)
 
 		status := kgo.AckAccept
@@ -145,7 +128,7 @@ func (w *Worker) scheduleRetry(ctx context.Context, envelope *kqpb.TaskEnvelope,
 		return err
 	}
 
-	return w.writer.Write(ctx, &kgo.Record{
+	return w.producer.Produce(ctx, &kgo.Record{
 		Topic:     bucket.topic,
 		Partition: bucket.partition,
 		Key:       []byte(envelope.Id),
@@ -162,5 +145,5 @@ func (w *Worker) flushAcks() error {
 
 func (w *Worker) Close() {
 	w.consumer.Close()
-	w.writer.Close()
+	w.producer.Close()
 }

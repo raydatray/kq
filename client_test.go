@@ -8,26 +8,26 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type fakeWriter struct {
+type fakeProducer struct {
 	record *kgo.Record
 	err    error
 }
 
-func (w *fakeWriter) Write(_ context.Context, record *kgo.Record) error {
-	w.record = record
-	return w.err
+func (p *fakeProducer) Produce(_ context.Context, record *kgo.Record) error {
+	p.record = record
+	return p.err
 }
 
-func (*fakeWriter) Close() {}
+func (*fakeProducer) Close() {}
 
 func TestClientEnqueue(t *testing.T) {
-	writer := new(fakeWriter)
+	producer := new(fakeProducer)
 	client := &Client{
 		config: Config{
 			Queue:       "email",
 			RetryPolicy: NewRetryPolicy(3, func(int32, string) time.Duration { return time.Minute }),
 		},
-		writer: writer,
+		producer: producer,
 	}
 
 	id, err := client.Enqueue(context.Background(), Task{
@@ -38,14 +38,14 @@ func TestClientEnqueue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if writer.record.Topic != "email-ready" {
-		t.Fatalf("topic = %q", writer.record.Topic)
+	if producer.record.Topic != "email-ready" {
+		t.Fatalf("topic = %q", producer.record.Topic)
 	}
-	if string(writer.record.Key) != id {
-		t.Fatalf("key = %q, want %q", writer.record.Key, id)
+	if string(producer.record.Key) != id {
+		t.Fatalf("key = %q, want %q", producer.record.Key, id)
 	}
 
-	envelope, err := decodeEnvelope(writer.record.Value)
+	envelope, err := decodeEnvelope(producer.record.Value)
 	if err != nil {
 		t.Fatal(err)
 	}
