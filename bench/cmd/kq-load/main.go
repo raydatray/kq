@@ -52,7 +52,9 @@ func run(args []string, _ *os.File) error {
 		return roles.RunProducer(ctx, config, output)
 	case events.RoleWorker:
 		return roles.RunWorker(ctx, config, output)
-	case events.RoleMover, events.RoleObserver:
+	case events.RoleMover:
+		return roles.RunMover(ctx, config, output)
+	case events.RoleObserver:
 		return fmt.Errorf("role %q not implemented yet", role)
 	default:
 		return fmt.Errorf("unknown role %q", role)
