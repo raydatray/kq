@@ -4,9 +4,94 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/twmb/franz-go/pkg/kgo"
 )
+
+type fakeShareGroupConsumer struct {
+	mu         sync.Mutex
+	results    []sharePollResult
+	pollLimits []int
+	acks       map[*kgo.Record][]kgo.AckStatus
+	flushes    int
+	flushErr   error
+}
+
+func (c *fakeShareGroupConsumer) Poll(ctx context.Context, limit int) sharePollResult {
+	c.mu.Lock()
+	c.pollLimits = append(c.pollLimits, limit)
+	if len(c.results) > 0 {
+		result := c.results[0]
+		c.results = c.results[1:]
+		c.mu.Unlock()
+		return result
+	}
+	c.mu.Unlock()
+
+	<-ctx.Done()
+	return sharePollResult{err: ctx.Err()}
+}
+
+func (c *fakeShareGroupConsumer) Ack(record *kgo.Record, status kgo.AckStatus) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.acks == nil {
+		c.acks = make(map[*kgo.Record][]kgo.AckStatus)
+	}
+	c.acks[record] = append(c.acks[record], status)
+}
+
+func (c *fakeShareGroupConsumer) FlushAcks(context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.flushes++
+	return c.flushErr
+}
+
+func (*fakeShareGroupConsumer) Close() {}
+
+func TestWorkerProcessesBoundedPollGeneration(t *testing.T) {
+	records := []*kgo.Record{
+		{Value: encodeWorkerTestTask(t, Task{Type: "first"}, 0)},
+		{Value: encodeWorkerTestTask(t, Task{Type: "second"}, 0)},
+	}
+	consumer := &fakeShareGroupConsumer{results: []sharePollResult{
+		{records: records},
+		{closed: true},
+	}}
+	var handled []string
+	worker := &Worker{
+		consumer:    consumer,
+		producer:    new(fakeProducer),
+		concurrency: 3,
+		handler: func(_ context.Context, task Task) error {
+			handled = append(handled, task.Type)
+			return nil
+		},
+	}
+
+	if err := worker.Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(handled, ","); got != "first,second" {
+		t.Fatalf("handled = %q, want first,second", got)
+	}
+	if len(consumer.pollLimits) != 2 || consumer.pollLimits[0] != 3 || consumer.pollLimits[1] != 3 {
+		t.Fatalf("poll limits = %v, want [3 3]", consumer.pollLimits)
+	}
+	for _, record := range records {
+		statuses := consumer.acks[record]
+		if len(statuses) != 1 || statuses[0] != kgo.AckAccept {
+			t.Fatalf("ack statuses = %v, want [accept]", statuses)
+		}
+	}
+	if consumer.flushes != 1 {
+		t.Fatalf("flushes = %d, want 1", consumer.flushes)
+	}
+}
 
 func TestWorkerHandlesTask(t *testing.T) {
 	producer := new(fakeProducer)
