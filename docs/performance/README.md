@@ -93,3 +93,6 @@ Suggestion: measure bounded worker concurrency against the same workload.
 
 The generated analysis must not present a hypothesis as a measured fact. It
 must record environmental caveats that could invalidate comparisons.
+
+The runner itself never writes `analysis.md`; point an agent at the run
+directory and `runs/_templates/analysis.md` to produce it.
