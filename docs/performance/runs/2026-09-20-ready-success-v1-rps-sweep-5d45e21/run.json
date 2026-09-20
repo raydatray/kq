@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-09-20-ready-success-v1-rps-sweep-5d45e21",
+  "created_at": "2026-09-20T22:51:05.389740Z",
+  "revision": "5d45e2141313",
+  "purpose": "Repeat the published ready-path capacity sweep against the current harness and lognormal execution model.",
+  "scenario": {
+    "id": "ready-success-v1",
+    "version": 1
+  },
+  "profile": "local-baseline",
+  "environment": {
+    "architecture": "arm64",
+    "ci_provider": "",
+    "cpu_count": 12,
+    "go_version": "go version go1.27.0 darwin/arm64",
+    "kafka_version": "apache/kafka:4.3.1",
+    "operating_system": "Darwin",
+    "python_version": "3.13.12",
+    "runner": "rays-MacBook-Pro.local"
+  },
+  "topology": {
+    "movers": 1,
+    "producers": 2,
+    "ready_partitions": 1,
+    "retry_partitions": 4,
+    "workers": 2
+  },
+  "workload": {
+    "arrival": {
+      "duration_seconds": 10,
+      "target_rps_sweep": [
+        200,
+        300,
+        325,
+        350,
+        400,
+        800
+      ]
+    },
+    "execution_time_ms": {
+      "average": 5,
+      "p99": 20
+    },
+    "failures": {
+      "mode": "none",
+      "rate": 0
+    },
+    "random_seed": 42,
+    "warmup_tasks": 20
+  },
+  "source_runs": [
+    "2026-09-20-ready-success-v1-5d45e21-200rps-r1",
+    "2026-09-20-ready-success-v1-5d45e21-300rps-r1",
+    "2026-09-20-ready-success-v1-5d45e21-325rps-r1",
+    "2026-09-20-ready-success-v1-5d45e21-350rps-r1",
+    "2026-09-20-ready-success-v1-5d45e21-400rps-r1",
+    "2026-09-20-ready-success-v1-5d45e21-800rps-r1"
+  ],
+  "notes": "Each point was an independent first-class sweep run with fresh Kafka volumes. Only workload.arrival.target_rps changed."
+}
