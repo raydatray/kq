@@ -55,7 +55,7 @@ func run(args []string, _ *os.File) error {
 	case events.RoleMover:
 		return roles.RunMover(ctx, config, output)
 	case events.RoleObserver:
-		return fmt.Errorf("role %q not implemented yet", role)
+		return roles.RunObserver(ctx, config, output)
 	default:
 		return fmt.Errorf("unknown role %q", role)
 	}
