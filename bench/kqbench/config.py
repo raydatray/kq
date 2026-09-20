@@ -23,10 +23,13 @@ DEFAULT_KQ = {
 
 DEFAULT_TIMEOUTS = {
     "startup_seconds": 30,
+    "warmup_seconds": 60,
     "workload_seconds": 120,
     "drain_seconds": 90,
     "shutdown_seconds": 10,
 }
+
+WARMUP_ID_BASE = 1 << 32
 
 
 def resolve_run(args: argparse.Namespace) -> dict[str, Any]:
@@ -81,6 +84,8 @@ def resolve_run(args: argparse.Namespace) -> dict[str, Any]:
         topology = deep_merge(topology, dict(adhoc["topology"]))
 
     random_seed = adhoc.get("random_seed", profile.get("random_seed", 1))
+    warmup_tasks = adhoc.get("warmup_tasks", profile.get("warmup_tasks", 10))
+    warmup = {"tasks": warmup_tasks, "id_base": WARMUP_ID_BASE}
 
     kq = dict(DEFAULT_KQ)
     if "kq" in adhoc:
@@ -116,6 +121,7 @@ def resolve_run(args: argparse.Namespace) -> dict[str, Any]:
             "execution_time_ms": execution_time,
             "random_seed": random_seed,
             "failures": failures,
+            "warmup": warmup,
         },
         "kq": kq,
         "timeouts": timeouts,
@@ -133,6 +139,11 @@ def resolve_run(args: argparse.Namespace) -> dict[str, Any]:
     failures = workload["failures"]
     failures.setdefault("duration_ms", 0)
     failures.setdefault("until", None)
+
+    warmup_section = workload.get("warmup", {})
+    warmup_section.setdefault("tasks", 10)
+    warmup_section.setdefault("id_base", WARMUP_ID_BASE)
+    workload["warmup"] = warmup_section
 
     validate_resolved_config(resolved)
     return resolved
@@ -208,6 +219,11 @@ def validate_resolved_config(resolved: dict[str, Any]) -> None:
         raise ValueError("kq.queue is required")
     if int(kq.get("max_retries", 0)) < 0:
         raise ValueError("kq.max_retries cannot be negative")
+    warmup = workload.get("warmup", {})
+    if int(warmup.get("tasks", 0)) < 0:
+        raise ValueError("warmup.tasks cannot be negative")
+    if int(warmup.get("id_base", 0)) <= 0:
+        raise ValueError("warmup.id_base must be positive")
 
 
 def build_run_id(created_at: datetime.datetime, scenario_label: str, revision: str) -> str:

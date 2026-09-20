@@ -81,6 +81,33 @@ func TestDueAtPacing(t *testing.T) {
 	}
 }
 
+func TestWarmupIDsReservedRange(t *testing.T) {
+	config := testProducerConfig()
+	config.Workload.Warmup.Tasks = 3
+	config.Workload.Warmup.IDBase = 1 << 32
+
+	got := config.WarmupIDs()
+	want := []uint64{1 << 32, (1 << 32) + 1, (1 << 32) + 2}
+	if len(got) != len(want) {
+		t.Fatalf("WarmupIDs = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("WarmupIDs = %v, want %v", got, want)
+		}
+	}
+	for _, id := range got {
+		if id < config.TotalTasks() {
+			t.Fatalf("warm-up ID %d overlaps measured range", id)
+		}
+	}
+
+	config.Workload.Warmup.Tasks = 0
+	if got := config.WarmupIDs(); len(got) != 0 {
+		t.Fatalf("WarmupIDs with zero tasks = %v, want empty", got)
+	}
+}
+
 func TestConfigValidation(t *testing.T) {
 	good := testProducerConfig()
 	if err := good.Validate(); err != nil {
@@ -100,6 +127,11 @@ func TestConfigValidation(t *testing.T) {
 	bad.KQ.Brokers = nil
 	if err := bad.Validate(); err == nil {
 		t.Fatal("expected brokers error")
+	}
+	bad = good
+	bad.Workload.Warmup.Tasks = -1
+	if err := bad.Validate(); err == nil {
+		t.Fatal("expected warm-up count error")
 	}
 }
 

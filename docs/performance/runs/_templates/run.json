@@ -39,6 +39,10 @@
       "rate": 0,
       "mode": "none",
       "duration_ms": 0
+    },
+    "warmup": {
+      "tasks": 0,
+      "id_base": 4294967296
     }
   }
 }
