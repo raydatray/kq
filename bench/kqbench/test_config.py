@@ -17,6 +17,8 @@ class ResolveRunTest(unittest.TestCase):
 
         self.assertEqual(baseline["topology"]["worker_concurrency"], 1)
         self.assertEqual(smoke["topology"]["worker_concurrency"], 2)
+        self.assertEqual(baseline["topology"]["producer_concurrency"], 1)
+        self.assertEqual(smoke["topology"]["producer_concurrency"], 1)
 
     def test_override_worker_concurrency(self) -> None:
         resolved = resolve_run(parse_args([
@@ -33,4 +35,21 @@ class ResolveRunTest(unittest.TestCase):
         ])
 
         with self.assertRaisesRegex(ValueError, "worker_concurrency must be positive"):
+            resolve_run(args)
+
+    def test_override_producer_concurrency(self) -> None:
+        resolved = resolve_run(parse_args([
+            "run", "--scenario", "ready-success-v1", "--profile", "local-baseline",
+            "--set", "topology.producer_concurrency=32",
+        ]))
+
+        self.assertEqual(resolved["topology"]["producer_concurrency"], 32)
+
+    def test_rejects_non_positive_producer_concurrency(self) -> None:
+        args = parse_args([
+            "run", "--scenario", "ready-success-v1", "--profile", "local-baseline",
+            "--set", "topology.producer_concurrency=0",
+        ])
+
+        with self.assertRaisesRegex(ValueError, "producer_concurrency must be positive"):
             resolve_run(args)
