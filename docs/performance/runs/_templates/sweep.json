@@ -1,0 +1,18 @@
+{
+  "id": "<sweep-id>",
+  "description": "<sweep description>",
+  "scenario": "<scenario-id>",
+  "profile": "<profile-id>",
+  "created_at": "<RFC3339>",
+  "revision": "<commit>",
+  "target_rps": [0],
+  "repetitions": 0,
+  "runs": [
+    {
+      "target_rps": 0,
+      "repetition": 0,
+      "run_id": "<run-id>",
+      "status": 0
+    }
+  ]
+}
