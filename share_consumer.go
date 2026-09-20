@@ -2,7 +2,9 @@ package kq
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 )
@@ -22,14 +24,18 @@ type shareGroupConsumer interface {
 
 type kafkaShareGroupConsumer struct {
 	client *kgo.Client
+	mu     sync.Mutex
+	ackErr error
 }
 
 func newKafkaShareGroupConsumer(config WorkerConfig) (*kafkaShareGroupConsumer, error) {
+	consumer := new(kafkaShareGroupConsumer)
 	options, err := config.Config.kafkaOptions(
 		kgo.ConsumeTopics(config.readyTopic()),
 		kgo.ShareGroup(config.workerGroup()),
 		kgo.ShareMaxRecords(int32(config.Concurrency)),
 		kgo.ShareMaxRecordsStrict(),
+		kgo.ShareAckCallback(consumer.recordAckResult),
 	)
 	if err != nil {
 		return nil, err
@@ -40,7 +46,8 @@ func newKafkaShareGroupConsumer(config WorkerConfig) (*kafkaShareGroupConsumer, 
 		return nil, fmt.Errorf("kq: create share consumer: %w", err)
 	}
 
-	return &kafkaShareGroupConsumer{client: client}, nil
+	consumer.client = client
+	return consumer, nil
 }
 
 func (c *kafkaShareGroupConsumer) Poll(ctx context.Context, limit int) sharePollResult {
@@ -57,9 +64,26 @@ func (*kafkaShareGroupConsumer) Ack(record *kgo.Record, status kgo.AckStatus) {
 }
 
 func (c *kafkaShareGroupConsumer) FlushAcks(ctx context.Context) error {
-	return c.client.FlushAcks(ctx)
+	flushErr := c.client.FlushAcks(ctx)
+	return errors.Join(flushErr, c.takeAckError())
+}
+
+func (c *kafkaShareGroupConsumer) takeAckError() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	ackErr := c.ackErr
+	c.ackErr = nil
+	return ackErr
 }
 
 func (c *kafkaShareGroupConsumer) Close() {
 	c.client.Close()
+}
+
+func (c *kafkaShareGroupConsumer) recordAckResult(_ *kgo.Client, results kgo.ShareAckResults) {
+	if err := results.Error(); err != nil {
+		c.mu.Lock()
+		c.ackErr = errors.Join(c.ackErr, err)
+		c.mu.Unlock()
+	}
 }
