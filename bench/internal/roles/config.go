@@ -27,12 +27,13 @@ type KQConfig struct {
 }
 
 type TopologyConfig struct {
-	ReadyPartitions   int `json:"ready_partitions,omitempty"`
-	RetryPartitions   int `json:"retry_partitions,omitempty"`
-	Producers         int `json:"producers"`
-	Workers           int `json:"workers"`
-	WorkerConcurrency int `json:"worker_concurrency"`
-	Movers            int `json:"movers"`
+	ReadyPartitions     int `json:"ready_partitions,omitempty"`
+	RetryPartitions     int `json:"retry_partitions,omitempty"`
+	Producers           int `json:"producers"`
+	ProducerConcurrency int `json:"producer_concurrency"`
+	Workers             int `json:"workers"`
+	WorkerConcurrency   int `json:"worker_concurrency"`
+	Movers              int `json:"movers"`
 }
 
 type WorkloadConfig struct {
@@ -83,6 +84,9 @@ func (c Config) Validate() error {
 	}
 	if c.Topology.Producers <= 0 {
 		return errors.New("roles: producer count must be positive")
+	}
+	if c.Topology.ProducerConcurrency <= 0 {
+		return errors.New("roles: producer concurrency must be positive")
 	}
 	if c.Topology.Workers <= 0 {
 		return errors.New("roles: worker count must be positive")

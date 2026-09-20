@@ -1,8 +1,12 @@
 package roles
 
 import (
+	"context"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/raydatray/kq/bench/internal/workload"
 )
 
 func testProducerConfig() Config {
@@ -16,10 +20,11 @@ func testProducerConfig() Config {
 			RetryGridPartitions:   4,
 		},
 		Topology: TopologyConfig{
-			Producers:         2,
-			Workers:           1,
-			WorkerConcurrency: 1,
-			Movers:            1,
+			Producers:           2,
+			ProducerConcurrency: 1,
+			Workers:             1,
+			WorkerConcurrency:   1,
+			Movers:              1,
 		},
 		Workload: WorkloadConfig{
 			Arrival: ArrivalConfig{
@@ -125,6 +130,11 @@ func TestConfigValidation(t *testing.T) {
 		t.Fatal("expected producer count error")
 	}
 	bad = good
+	bad.Topology.ProducerConcurrency = 0
+	if err := bad.Validate(); err == nil {
+		t.Fatal("expected producer concurrency error")
+	}
+	bad = good
 	bad.Topology.WorkerConcurrency = 0
 	if err := bad.Validate(); err == nil {
 		t.Fatal("expected worker concurrency error")
@@ -138,6 +148,48 @@ func TestConfigValidation(t *testing.T) {
 	bad.Workload.Warmup.Tasks = -1
 	if err := bad.Validate(); err == nil {
 		t.Fatal("expected warm-up count error")
+	}
+}
+
+func TestProducerPoolBoundsConcurrency(t *testing.T) {
+	const concurrency = 4
+	started := make(chan struct{}, concurrency)
+	release := make(chan struct{})
+	var active atomic.Int32
+	var maximum atomic.Int32
+	var completed atomic.Int32
+	pool := newProducerPool(context.Background(), concurrency, func(context.Context, workload.Job) error {
+		current := active.Add(1)
+		defer active.Add(-1)
+		for {
+			prior := maximum.Load()
+			if current <= prior || maximum.CompareAndSwap(prior, current) {
+				break
+			}
+		}
+		started <- struct{}{}
+		<-release
+		completed.Add(1)
+		return nil
+	})
+
+	for id := range 2 * concurrency {
+		if err := pool.Submit(context.Background(), workload.Job{WorkloadID: uint64(id)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for range concurrency {
+		<-started
+	}
+	if got := maximum.Load(); got != concurrency {
+		t.Fatalf("maximum concurrency = %d, want %d", got, concurrency)
+	}
+	close(release)
+	if err := pool.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := completed.Load(); got != 2*concurrency {
+		t.Fatalf("completed = %d, want %d", got, 2*concurrency)
 	}
 }
 
