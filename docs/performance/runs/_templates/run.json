@@ -20,6 +20,7 @@
     "ready_partitions": 0,
     "retry_partitions": 0,
     "producers": 0,
+    "producer_concurrency": 0,
     "workers": 0,
     "worker_concurrency": 0,
     "movers": 0

@@ -6,6 +6,7 @@
   },
   "topology": {
     "producers": 2,
+    "producer_concurrency": 1,
     "workers": 2,
     "worker_concurrency": 1,
     "movers": 1
