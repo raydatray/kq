@@ -33,42 +33,37 @@ sequenceDiagram
     end
 ```
 
-## Bounded Acquisition
+## Fixed Pool And Bounded Acquisition
 
-The worker only polls for work when its execution pool has capacity. This
-prevents it from holding more acquired records than it can execute or safely
-renew.
+`Run` starts exactly the configured number of long-lived pool goroutines. The
+calling goroutine polls Kafka, feeds a bounded jobs channel, receives results,
+and owns all acknowledgement flushing. Tasks reuse the existing pool; the
+worker does not create a goroutine per task.
 
 ```go
 func (w *Worker) Run(ctx context.Context) error {
-	for ctx.Err() == nil {
-		capacity := w.pool.Available()
-		if capacity == 0 {
-			if err := w.pool.WaitAvailable(ctx); err != nil {
-				return err
-			}
-			continue
-		}
+	jobs := make(chan workerJob, w.concurrency)
+	results := make(chan workerResult, w.concurrency)
+	workers := startFixedPool(ctx, w.concurrency, jobs, results)
+	defer stopFixedPool(jobs, workers)
 
-		records, err := w.consumer.Poll(ctx, capacity)
-		if err != nil {
-			return err
-		}
-
-		for _, record := range records {
-			record := record
-			w.pool.Go(func() {
-				w.execute(ctx, record)
-			})
-		}
+	for {
+		records := w.consumer.Poll(ctx, w.concurrency)
+		dispatch(records, jobs)
+		resolve(records, results)
+		w.consumer.FlushAcks(ctx)
 	}
-
-	return ctx.Err()
 }
 ```
 
-The concrete Kafka consumer should also enforce an acquisition limit so a
-single poll cannot exceed the configured worker capacity.
+The concrete Kafka consumer enforces the same acquisition limit. Because the
+current share consumer auto-accepts unresolved records on the next poll, a new
+generation is not polled until every record in the prior generation has a
+terminal decision and its acknowledgements have been flushed.
+
+A slow record can therefore delay refill after faster peers in its generation
+finish. Continuous refill requires explicit acknowledgements and acquisition
+renewal and is intentionally outside the simple fixed-pool design.
 
 ## JSON Job Dispatch
 
@@ -190,9 +185,10 @@ record using the original task identity and payload.
 
 ## Shutdown and Recovery
 
-Graceful shutdown stops polling, waits for in-flight handlers for a configured
-period, releases unfinished records, flushes acknowledgements, and closes the
-Kafka clients.
+Graceful shutdown stops polling, lets dispatched handlers observe context
+cancellation, waits for them to return, releases canceled records, and flushes
+acknowledgements. Handlers must honor context cancellation; this implementation
+does not yet impose a separate shutdown deadline.
 
 If a process crashes or loses an acquisition before acknowledgement, Kafka
 expires the acquisition and makes the record available to another worker.
