@@ -1,0 +1,95 @@
+{
+  "run_id": "2026-09-23-north-star-steady-v1-harness-capacity-33c95bf",
+  "created_at": "2026-09-23T00:05:00Z",
+  "revision": "33c95bf74b5c",
+  "purpose": "Locate the local capacity ceiling of the kq-bench harness on the north-star execution-time distribution by scaling producers, workers, worker concurrency, and ready partitions.",
+  "scenario": {
+    "id": "north-star-steady-v1",
+    "version": 1
+  },
+  "profile": "ci-smoke",
+  "command": "kq-bench run --scenario north-star-steady-v1 --profile ci-smoke --set <per-point topology and arrival overrides>; see result.json points[].command",
+  "environment": {
+    "architecture": "arm64",
+    "ci_provider": "",
+    "cpu_count": 12,
+    "go_version": "go version go1.27.0 darwin/arm64",
+    "kafka_version": "apache/kafka:4.3.1",
+    "memory_bytes": 22118400,
+    "operating_system": "Darwin",
+    "python_version": "3.13.12",
+    "runner": "rays-MacBook-Pro.local",
+    "docker_vm_cpus": 12,
+    "docker_vm_memory_bytes": 8216776704
+  },
+  "topology": {
+    "ready_partitions_sweep": [
+      4,
+      16,
+      24,
+      32,
+      40
+    ],
+    "retry_partitions": 4,
+    "producers_sweep": [
+      4,
+      6,
+      8,
+      10,
+      15,
+      16,
+      20
+    ],
+    "workers_sweep": [
+      4,
+      8,
+      12,
+      15,
+      18,
+      24
+    ],
+    "worker_concurrency_sweep": [
+      100,
+      250,
+      500,
+      1000,
+      2000
+    ],
+    "movers": 1
+  },
+  "workload": {
+    "arrival": {
+      "target_rps_sweep": [
+        500,
+        3000,
+        5000,
+        8000,
+        12000,
+        16000,
+        20000
+      ],
+      "duration_seconds_sweep": [
+        20,
+        30,
+        40,
+        45
+      ]
+    },
+    "execution_time_ms": {
+      "average": 250,
+      "p95": 475,
+      "p99": 646
+    },
+    "random_seed": 1,
+    "failures": {
+      "rate": 0,
+      "mode": "none",
+      "duration_ms": 0
+    },
+    "warmup": {
+      "tasks": 10,
+      "id_base": 4294967296
+    }
+  },
+  "notes": "Every point used revision 33c95bf74b5c with no source changes. The harness was invoked from source (PYTHONPATH=bench) because the configured package index rejected the hatchling build dependency. Host and process CPU peaks were sampled every 2 s with top, docker stats, and ps; ps CPU is a decaying average and is approximate."
+}
