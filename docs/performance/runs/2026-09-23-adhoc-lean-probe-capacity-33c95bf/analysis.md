@@ -25,6 +25,9 @@ This is the second of the runs published on 2026-09-23:
 5. [Shard-10 ramp](../2026-09-23-adhoc-shard-10-ramp-33c95bf/analysis.md):
    ramp arrival with 1000 members x concurrency 10; 20,000 RPS is the highest
    rate near the Redis reference, limited by slot capacity.
+6. [Shard-20 ramp](../2026-09-23-adhoc-shard-20-ramp-33c95bf/analysis.md):
+   concurrency 20 per member raised the ceiling to 34,000 RPS at 16
+   partitions with queue time below the Redis reference.
 
 ## Purpose
 

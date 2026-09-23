@@ -26,6 +26,9 @@ This is the fifth of the runs published on 2026-09-23:
 5. **This run.** Hold the run 4 topology fixed and ramp arrival at 8, 16, 32,
    and 64 partitions to find the highest rate that keeps queue time near the
    Redis reference.
+6. [Shard-20 ramp](../2026-09-23-adhoc-shard-20-ramp-33c95bf/analysis.md):
+   concurrency 20 per member raised the ceiling to 34,000 RPS at 16
+   partitions with queue time below the Redis reference.
 
 ## Purpose
 
