@@ -1,0 +1,214 @@
+{
+  "correctness": {
+    "produced": 270000,
+    "completed": 270000,
+    "duplicates": 0,
+    "missing": 0
+  },
+  "points": [
+    {
+      "label": "x-c1000-zero",
+      "requested_rps": 2000,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 2,
+      "workers_per_process": 4,
+      "worker_concurrency": 1000,
+      "share_group_members": 8,
+      "total_slots": 8000,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "const:0",
+      "achieved_enqueue_rps": 2000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 2000,
+      "completion_rps_max_1s": 2007,
+      "seconds_with_completions_after_production": 0,
+      "queue_p50_ms": 0,
+      "queue_p95_ms": 1,
+      "queue_p99_ms": 6,
+      "queue_max_ms": 310,
+      "correctness": {
+        "produced": 60000,
+        "completed": 60000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 2.59,
+        "producer": 0.26,
+        "workers": 0.4
+      }
+    },
+    {
+      "label": "x-c1000-const250",
+      "requested_rps": 2000,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 2,
+      "workers_per_process": 4,
+      "worker_concurrency": 1000,
+      "share_group_members": 8,
+      "total_slots": 8000,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "const:250",
+      "achieved_enqueue_rps": 2000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 2030,
+      "completion_rps_max_1s": 2747,
+      "seconds_with_completions_after_production": 0,
+      "queue_p50_ms": 131,
+      "queue_p95_ms": 245,
+      "queue_p99_ms": 254,
+      "queue_max_ms": 367,
+      "correctness": {
+        "produced": 60000,
+        "completed": 60000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 1.02,
+        "producer": 0.22,
+        "workers": 0.03
+      }
+    },
+    {
+      "label": "x-c1000-ns",
+      "requested_rps": 2000,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 2,
+      "workers_per_process": 4,
+      "worker_concurrency": 1000,
+      "share_group_members": 8,
+      "total_slots": 8000,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "northstar",
+      "achieved_enqueue_rps": 2000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 1996,
+      "completion_rps_max_1s": 2241,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 402,
+      "queue_p95_ms": 873,
+      "queue_p99_ms": 1105,
+      "queue_max_ms": 1673,
+      "correctness": {
+        "produced": 60000,
+        "completed": 60000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 1.0,
+        "producer": 0.22,
+        "workers": 0.05
+      }
+    },
+    {
+      "label": "x-c10-ns",
+      "requested_rps": 2000,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 6,
+      "workers_per_process": 30,
+      "worker_concurrency": 10,
+      "share_group_members": 180,
+      "total_slots": 1800,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "northstar",
+      "achieved_enqueue_rps": 2000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 2002,
+      "completion_rps_max_1s": 2099,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 20,
+      "queue_p95_ms": 81,
+      "queue_p99_ms": 119,
+      "queue_max_ms": 300,
+      "correctness": {
+        "produced": 60000,
+        "completed": 60000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 1.61,
+        "producer": 0.25,
+        "workers": 0.21
+      }
+    },
+    {
+      "label": "x-c1-ns",
+      "requested_rps": 500,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 6,
+      "workers_per_process": 30,
+      "worker_concurrency": 1,
+      "share_group_members": 180,
+      "total_slots": 180,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "northstar",
+      "achieved_enqueue_rps": 500,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 500,
+      "completion_rps_max_1s": 536,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 1,
+      "queue_p95_ms": 70,
+      "queue_p99_ms": 191,
+      "queue_max_ms": 344,
+      "correctness": {
+        "produced": 15000,
+        "completed": 15000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 1.43,
+        "producer": 0.16,
+        "workers": 0.26
+      }
+    },
+    {
+      "label": "x-c1-zero",
+      "requested_rps": 500,
+      "duration_seconds": 30,
+      "ready_partitions": 16,
+      "worker_processes": 6,
+      "workers_per_process": 30,
+      "worker_concurrency": 1,
+      "share_group_members": 180,
+      "total_slots": 180,
+      "producer_clients": 1,
+      "enqueue_goroutines_per_client": 64,
+      "execution": "const:0",
+      "achieved_enqueue_rps": 500,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 500,
+      "completion_rps_max_1s": 501,
+      "seconds_with_completions_after_production": 0,
+      "queue_p50_ms": 1,
+      "queue_p95_ms": 1,
+      "queue_p99_ms": 9,
+      "queue_max_ms": 292,
+      "correctness": {
+        "produced": 15000,
+        "completed": 15000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 1.45,
+        "producer": 0.15,
+        "workers": 0.23
+      }
+    }
+  ]
+}
