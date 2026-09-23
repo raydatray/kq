@@ -1,0 +1,400 @@
+{
+  "correctness": {
+    "produced": 12120000,
+    "completed": 12120000,
+    "duplicates": 0,
+    "missing": 0
+  },
+  "summary_by_partitions": [
+    {
+      "ready_partitions": 8,
+      "highest_rps_meeting_target": 20000,
+      "tested_rps": [
+        20000,
+        21000,
+        22000
+      ],
+      "maximum_median_completion_rps": 21042
+    },
+    {
+      "ready_partitions": 16,
+      "highest_rps_meeting_target": 20000,
+      "tested_rps": [
+        20000,
+        21000
+      ],
+      "maximum_median_completion_rps": 20938
+    },
+    {
+      "ready_partitions": 32,
+      "highest_rps_meeting_target": 20000,
+      "tested_rps": [
+        20000,
+        21000
+      ],
+      "maximum_median_completion_rps": 20884
+    },
+    {
+      "ready_partitions": 64,
+      "highest_rps_meeting_target": 18000,
+      "tested_rps": [
+        18000,
+        19000,
+        20000
+      ],
+      "maximum_median_completion_rps": 20005
+    }
+  ],
+  "points": [
+    {
+      "label": "ramp-p8-20k",
+      "requested_rps": 20000,
+      "duration_seconds": 60,
+      "ready_partitions": 8,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 20000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20013,
+      "completion_rps_peak_1s": 21086,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 14,
+      "queue_p95_ms": 48,
+      "queue_p99_ms": 99,
+      "queue_max_ms": 589,
+      "correctness": {
+        "produced": 1200000,
+        "completed": 1200000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.71,
+        "producer": 1.31,
+        "workers": 1.56
+      },
+      "sustained": true,
+      "meets_latency_target": true
+    },
+    {
+      "label": "ramp-p8-21k",
+      "requested_rps": 21000,
+      "duration_seconds": 60,
+      "ready_partitions": 8,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 21000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 21042,
+      "completion_rps_peak_1s": 21275,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 50,
+      "queue_p95_ms": 160,
+      "queue_p99_ms": 243,
+      "queue_max_ms": 633,
+      "correctness": {
+        "produced": 1260000,
+        "completed": 1260000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 6.1,
+        "producer": 1.48,
+        "workers": 1.6
+      },
+      "sustained": true,
+      "meets_latency_target": false
+    },
+    {
+      "label": "ramp-p8-22k",
+      "requested_rps": 22000,
+      "duration_seconds": 60,
+      "ready_partitions": 8,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 21999,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20911,
+      "completion_rps_peak_1s": 21348,
+      "seconds_with_completions_after_production": 5,
+      "queue_p50_ms": 1431,
+      "queue_p95_ms": 3205,
+      "queue_p99_ms": 3813,
+      "queue_max_ms": 3978,
+      "correctness": {
+        "produced": 1320000,
+        "completed": 1320000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 7.9,
+        "producer": 0.94,
+        "workers": 1.37
+      },
+      "sustained": false,
+      "meets_latency_target": false
+    },
+    {
+      "label": "ramp-p16-20k",
+      "requested_rps": 20000,
+      "duration_seconds": 60,
+      "ready_partitions": 16,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 20000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20010,
+      "completion_rps_peak_1s": 20876,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 24,
+      "queue_p95_ms": 70,
+      "queue_p99_ms": 101,
+      "queue_max_ms": 837,
+      "correctness": {
+        "produced": 1200000,
+        "completed": 1200000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.97,
+        "producer": 1.43,
+        "workers": 1.54
+      },
+      "sustained": true,
+      "meets_latency_target": true
+    },
+    {
+      "label": "ramp-p16-21k",
+      "requested_rps": 21000,
+      "duration_seconds": 60,
+      "ready_partitions": 16,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 21000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20938,
+      "completion_rps_peak_1s": 21232,
+      "seconds_with_completions_after_production": 4,
+      "queue_p50_ms": 60,
+      "queue_p95_ms": 597,
+      "queue_p99_ms": 2815,
+      "queue_max_ms": 3485,
+      "correctness": {
+        "produced": 1260000,
+        "completed": 1260000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 6.24,
+        "producer": 1.5,
+        "workers": 1.62
+      },
+      "sustained": false,
+      "meets_latency_target": false
+    },
+    {
+      "label": "ramp-p32-20k",
+      "requested_rps": 20000,
+      "duration_seconds": 60,
+      "ready_partitions": 32,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 20000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 19996,
+      "completion_rps_peak_1s": 20284,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 42,
+      "queue_p95_ms": 133,
+      "queue_p99_ms": 207,
+      "queue_max_ms": 544,
+      "correctness": {
+        "produced": 1200000,
+        "completed": 1200000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.82,
+        "producer": 1.39,
+        "workers": 1.6
+      },
+      "sustained": true,
+      "meets_latency_target": true
+    },
+    {
+      "label": "ramp-p32-21k",
+      "requested_rps": 21000,
+      "duration_seconds": 60,
+      "ready_partitions": 32,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 21000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20884,
+      "completion_rps_peak_1s": 21171,
+      "seconds_with_completions_after_production": 14,
+      "queue_p50_ms": 94,
+      "queue_p95_ms": 465,
+      "queue_p99_ms": 11391,
+      "queue_max_ms": 13639,
+      "correctness": {
+        "produced": 1260000,
+        "completed": 1260000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 6.3,
+        "producer": 1.54,
+        "workers": 1.61
+      },
+      "sustained": false,
+      "meets_latency_target": false
+    },
+    {
+      "label": "ramp-p64-18k",
+      "requested_rps": 18000,
+      "duration_seconds": 60,
+      "ready_partitions": 64,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 2,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 18000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 18003,
+      "completion_rps_peak_1s": 19778,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 39,
+      "queue_p95_ms": 125,
+      "queue_p99_ms": 203,
+      "queue_max_ms": 724,
+      "correctness": {
+        "produced": 1080000,
+        "completed": 1080000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.9,
+        "producer": 1.37,
+        "workers": 1.6
+      },
+      "sustained": true,
+      "meets_latency_target": true
+    },
+    {
+      "label": "ramp-p64-19k",
+      "requested_rps": 19000,
+      "duration_seconds": 60,
+      "ready_partitions": 64,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 2,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 19000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 18992,
+      "completion_rps_peak_1s": 20714,
+      "seconds_with_completions_after_production": 2,
+      "queue_p50_ms": 51,
+      "queue_p95_ms": 171,
+      "queue_p99_ms": 421,
+      "queue_max_ms": 1435,
+      "correctness": {
+        "produced": 1140000,
+        "completed": 1140000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.81,
+        "producer": 1.36,
+        "workers": 1.63
+      },
+      "sustained": true,
+      "meets_latency_target": false
+    },
+    {
+      "label": "ramp-p64-20k",
+      "requested_rps": 20000,
+      "duration_seconds": 60,
+      "ready_partitions": 64,
+      "worker_processes": 10,
+      "workers_per_process": 100,
+      "worker_concurrency": 10,
+      "share_group_members": 1000,
+      "total_slots": 10000,
+      "producer_clients": 3,
+      "enqueue_goroutines_per_client": 512,
+      "achieved_enqueue_rps": 20000,
+      "enqueue_errors": 0,
+      "completion_rps_median_1s": 20005,
+      "completion_rps_peak_1s": 20314,
+      "seconds_with_completions_after_production": 1,
+      "queue_p50_ms": 73,
+      "queue_p95_ms": 225,
+      "queue_p99_ms": 361,
+      "queue_max_ms": 903,
+      "correctness": {
+        "produced": 1200000,
+        "completed": 1200000,
+        "duplicates": 0,
+        "missing": 0
+      },
+      "cpu_cores_10s_window": {
+        "kafka_docker_vm": 5.92,
+        "producer": 1.4,
+        "workers": 1.62
+      },
+      "sustained": true,
+      "meets_latency_target": false
+    }
+  ]
+}
