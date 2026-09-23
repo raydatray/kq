@@ -1,0 +1,62 @@
+{
+  "run_id": "2026-09-23-adhoc-share-group-1000-members-33c95bf",
+  "created_at": "2026-09-23T01:28:00Z",
+  "revision": "33c95bf74b5c",
+  "purpose": "Test whether raising the share-group member limit to its maximum (1000) lets many small worker generations (1000 members x concurrency 10, emulating a sharded consumer) sustain 20,000 RPS with low queue time, and measure sensitivity to ready partition count.",
+  "scenario": null,
+  "profile": null,
+  "runner": "../2026-09-23-adhoc-lean-probe-capacity-33c95bf/probe/main.go via probe/run.sh with COMPOSE=compose.yaml SETTLE=40",
+  "command": "COMPOSE=compose.yaml SETTLE=40 ../2026-09-23-adhoc-lean-probe-capacity-33c95bf/probe/run.sh m1000-p<partitions> 20000 60 <partitions> 10 100 10",
+  "environment": {
+    "architecture": "arm64",
+    "ci_provider": "",
+    "cpu_count": 12,
+    "go_version": "go version go1.27.0 darwin/arm64",
+    "kafka_version": "apache/kafka:4.3.1",
+    "memory_bytes": 22003712,
+    "operating_system": "Darwin",
+    "python_version": "3.13.12",
+    "runner": "rays-MacBook-Pro.local",
+    "docker_vm_cpus": 12,
+    "docker_vm_memory_bytes": 8216776704
+  },
+  "kafka_overrides": {
+    "group.share.max.size": 1000,
+    "group.share.partition.max.record.locks": 4000,
+    "validation": "group.share.max.size=1001 is rejected at broker startup: 'Value must be no more than 1000'. group.share.max.partition.max.record.locks defaults to 4000, the effective ceiling for record locks."
+  },
+  "topology": {
+    "ready_partitions_sweep": [
+      2,
+      4,
+      8,
+      16,
+      32
+    ],
+    "worker_processes": 10,
+    "workers_per_process": 100,
+    "worker_concurrency": 10,
+    "share_group_members": 1000,
+    "retry_partitions": 0,
+    "movers": 0
+  },
+  "workload": {
+    "arrival": {
+      "target_rps": 20000,
+      "duration_seconds": 60
+    },
+    "execution_time_ms": {
+      "average": 250,
+      "p95": 475,
+      "p99": 646,
+      "distribution": "lognormal, sigma=ln(646/475)/(2.326-1.645), mean 250 ms, seeded by task ID"
+    },
+    "failures": {
+      "rate": 0,
+      "mode": "none",
+      "duration_ms": 0
+    },
+    "payload_bytes": 200
+  },
+  "notes": "One run per point. Kafka recreated per point from compose.yaml (bench/compose.yaml plus the two overrides). Workers started 40 s before producers. Worker processes exit after 15 s without completions, so collapsed points end with unconsumed tasks still in Kafka."
+}
