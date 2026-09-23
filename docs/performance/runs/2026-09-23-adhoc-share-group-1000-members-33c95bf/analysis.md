@@ -12,7 +12,7 @@ retained diagnostics.
 
 ## Sequence
 
-This is the fourth and latest of four runs published on 2026-09-23:
+This is the fourth of the runs published on 2026-09-23:
 
 1. [Harness capacity](../2026-09-23-north-star-steady-v1-harness-capacity-33c95bf/analysis.md):
    `kq-bench` saturated the host near 13,000 tasks/s.
@@ -23,6 +23,9 @@ This is the fourth and latest of four runs published on 2026-09-23:
    are fast, but the default 200-member cap limits their throughput.
 4. **This run.** Raise the member cap to 1000 and test whether 1000 small
    generations sustain 20,000 RPS with low queue time.
+5. [Shard-10 ramp](../2026-09-23-adhoc-shard-10-ramp-33c95bf/analysis.md):
+   ramp arrival with 1000 members x concurrency 10; 20,000 RPS is the highest
+   rate near the Redis reference, limited by slot capacity.
 
 ## Purpose
 

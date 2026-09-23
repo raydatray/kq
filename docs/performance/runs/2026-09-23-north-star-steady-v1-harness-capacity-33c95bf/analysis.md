@@ -9,7 +9,7 @@ retained diagnostics.
 
 ## Sequence
 
-This is the first of four runs published on 2026-09-23:
+This is the first of the runs published on 2026-09-23:
 
 1. **This run.** Push `kq-bench` on the north-star workload until something
    breaks.
@@ -20,6 +20,9 @@ This is the first of four runs published on 2026-09-23:
    explain the roughly 475 ms queue p50 seen here and in run 2.
 4. [Share group with 1000 members](../2026-09-23-adhoc-share-group-1000-members-33c95bf/analysis.md):
    test many small worker generations at the raised member cap.
+5. [Shard-10 ramp](../2026-09-23-adhoc-shard-10-ramp-33c95bf/analysis.md):
+   ramp arrival with 1000 members x concurrency 10; 20,000 RPS is the highest
+   rate near the Redis reference, limited by slot capacity.
 
 ## Purpose
 
