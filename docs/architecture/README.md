@@ -52,5 +52,6 @@ which prevents task loss but permits duplicate records under failure.
 - [Producer](producer.md)
 - [Execution worker](worker.md)
 - [Retry mover](retry-mover.md)
+- [Scaling](../scaling.md)
 - [Proposed public API](../api.md)
 - [Design requirements](../requirements.md)
